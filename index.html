@@ -813,8 +813,8 @@ function toast(t,c){ui.toasts.push({t:norm(t),c,a:0})}
 function st(k,d){const old=S[k];S[k]=k==='soldi'?Math.max(0,S[k]+d):clamp(S[k]+d,0,100);const r=S[k]-old;if(r){toast((r>0?'+':'')+r+' '+tr(LBL[k][0]),LBL[k][1]);if(k==='hp'&&r<0){ui.shake=4;ui.flash=.5;SFX.bad();vib(120)}if(k==='mente'&&r<=-8)ui.glitch=.25}}
 function layoutChoices(){const c=ui.choices,n=c.opts.length,cols=c.cols,rows=Math.ceil(n/cols),bh=17,gap=4;
  let bw=cols===1?Math.max(112,Math.max(...c.opts.map(o=>o.length))*6+26):152;
- const tw=cols*bw+(cols-1)*gap;const x0=c.pos==='center'?(W-tw)/2:W-10-tw;
- const y0=c.pos==='center'?(ui.dialog?146:H-14)-rows*(bh+gap):(ui.dialog?146:200)-rows*(bh+gap);
+ const tw=cols*bw+(cols-1)*gap;const x0=c.pos==='center'||c.pos==='mid'?(W-tw)/2:W-10-tw;
+ const y0=c.pos==='mid'?Math.round(H/2-rows*(bh+gap)/2-8):c.pos==='center'?(ui.dialog?146:H-14)-rows*(bh+gap):(ui.dialog?146:200)-rows*(bh+gap);
  return c.opts.map((o,i)=>({x:x0+(i%cols)*(bw+gap),y:y0+Math.floor(i/cols)*(bh+gap),w:bw,h:bh}))}
 function hitChoice(x,y){if(!ui.choices)return-1;const r=layoutChoices();for(let i=0;i<r.length;i++){const b=r[i];if(x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h)return i}return-1}
 
@@ -848,8 +848,8 @@ function autoFS(e){if(fsTried||isApp||isFS())return;
  if(e.type==='keydown'&&(e.key==='f'||e.key==='F'))return;
  goFS()}
 ['pointerdown','pointerup','touchend','click','keydown'].forEach(t=>document.addEventListener(t,autoFS,{capture:true,passive:true}));
-document.addEventListener('fullscreenchange',()=>{if(isFS())fsTried=true});
-document.addEventListener('webkitfullscreenchange',()=>{if(isFS())fsTried=true});
+let fsAt=0;document.addEventListener('fullscreenchange',()=>{if(isFS()){fsTried=true;fsAt=Date.now()}});
+document.addEventListener('webkitfullscreenchange',()=>{if(isFS()){fsTried=true;fsAt=Date.now()}});
 function goFS(toggle){const d=document,el=d.documentElement;
  if(toggle&&(d.fullscreenElement||d.webkitFullscreenElement)){try{(d.exitFullscreen||d.webkitExitFullscreen).call(d)}catch(e){}return}
  const rq=el.requestFullscreen||el.webkitRequestFullscreen;
@@ -1002,10 +1002,10 @@ function drawTitle(){const gl=(ui.t%7)>6.82;
  text(hhmm(),W-34,206,gl?'#ff6060':'#c0306a');
 }
 function drawStart(){R(0,0,W,H,'#000000');textO('IL MIO AMICO',W/2,22,'#ffffff',3,'#5a1030');
- if(Math.floor(ui.t*2)%2===0)textC('SCEGLI LA LINGUA / CHOOSE LANGUAGE',W/2,58,'#ff9ec0');
- textC(tr('SI GIOCA IN ORIZZONTALE, A SCHERMO INTERO'),W/2,80,'#8888aa');
- textC(tr('PC: CLIC / SPAZIO / TASTI 1-9   M AUDIO   F SCHERMO'),W/2,94,'#555566');
- textC(tr('CONTIENE TEMI HORROR E SANGUE. PEGI 16.'),W/2,108,'#555566')}
+ if(Math.floor(ui.t*2)%2===0)textC('SCEGLI LA LINGUA / CHOOSE LANGUAGE',W/2,62,'#ff9ec0');
+ textC(tr('SI GIOCA IN ORIZZONTALE, A SCHERMO INTERO'),W/2,150,'#8888aa');
+ textC(tr('PC: CLIC / SPAZIO / TASTI 1-9   M AUDIO   F SCHERMO'),W/2,164,'#555566');
+ textC(tr('CONTIENE TEMI HORROR E SANGUE. PEGI 16.'),W/2,178,'#555566')}
 function drawHospital(p){const c=corr();R(0,0,W,H,mix('#dfe9e4','#2a1a1e',c*.5));
  R(0,150,W,66,mix('#b8c4bf','#20141a',c*.5));R(0,150,W,2,'rgba(0,0,0,.2)');
  R(30,30,90,70,'#0b1430');for(let y=32;y<98;y+=5)R(30,y,90,3,'rgba(220,230,240,.85)');
@@ -1727,6 +1727,7 @@ async function ending(key,lines){ui.heart=0;ui.mood=null;await fade(1);ui.hud=fa
 
 /* ============ MAIN ============ */
 async function titleScreen(){S=null;ui.hud=false;ui.dialog=null;view('title');ui.music=true;await fade(0);
+ {const w=3200-(Date.now()-fsAt);if(fsAt&&w>0)await sleep(w)}
  while(true){const ck=getCk();const opts=['NUOVA PARTITA'],ids=['new'];if(ck){opts.push(L('CONTINUA (GIORNO ','CONTINUE (DAY ')+ck.day+')');ids.push('ck')}
   if(NET.ok){opts.push('CARICA DA CODICE');ids.push('code')}
   opts.push(L('LINGUA: ITALIANO','LANGUAGE: ENGLISH'));ids.push('lang');
@@ -1742,7 +1743,7 @@ async function askName(){view('title');await fade(0);
   promptBox('Scrivi un nome vero. Almeno 2 lettere.');await sleep(1300)}
  promptBox(L('Piacere, '+P.name+'. Me lo ricorderò.','Nice to meet you, '+P.name+'. I\'ll remember that.'));await sleep(1600);ui.glitch=.3;await sleep(300);ui.dialog=null}
 async function main(){
- view('start');ui.fade=0;ui.fadeTo=0;{const p=choose(['ITALIANO','ENGLISH'],1,'center');ui.hover=LANG==='en'?1:0;setLang((await p)===1?'en':'it')}await fade(1);
+ view('start');ui.fade=0;ui.fadeTo=0;{const p=choose(['ITALIANO','ENGLISH'],2,'mid');ui.hover=LANG==='en'?1:0;setLang((await p)===1?'en':'it')}await fade(1);
  while(true){let mode=await titleScreen();
   while(true){try{if(mode==='new'){await askName();P.plays++;inc('partite');if(P.plays===1)inc('ospiti');PREV_SEEN=0;saveProfile(true);await fade(1);S=newState();await chapter1()}else S=getCk();
    await chapter2();await chapter3();await chapter4();await chapter5();break}
