@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#000000">
+<title>Il Mio Amico</title>
+<style>
+html,body{margin:0;height:100%;background:#000;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+#c{position:absolute;image-rendering:pixelated;image-rendering:crisp-edges;cursor:pointer}
+#rot{display:none;position:fixed;inset:0;background:#111;color:#fff;font:bold 16px monospace;z-index:9;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:22px;letter-spacing:1px}
+#rot .ph{width:38px;height:66px;border:4px solid #fff;border-radius:7px;animation:r 1.8s infinite}
+@keyframes r{0%,25%{transform:rotate(0)}60%,100%{transform:rotate(-90deg)}}
+@media (orientation:portrait){#rot{display:flex}}
+#inp{display:none;position:fixed;inset:0;z-index:8;background:rgba(0,0,0,.55);align-items:center;justify-content:center}
+#inp .bx{background:#3d8fe6;border:3px solid #fff;box-shadow:6px 6px 0 #0a1a3a;padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-width:260px;max-width:86vw;font:bold 15px monospace;color:#fff;letter-spacing:1px}
+#inpt{font:bold 18px monospace;padding:6px 8px;border:2px solid #0a1a3a;background:#eef4ff;color:#111;text-transform:uppercase;outline:none}
+#inpt.low{text-transform:none}
+#inpok{font:bold 15px monospace;background:#fff;color:#1d4f9a;border:0;padding:6px;cursor:pointer}
+#fs{position:fixed;right:6px;bottom:6px;z-index:5;background:rgba(0,0,0,.35);color:#fff;border:2px solid rgba(255,255,255,.7);font:bold 13px monospace;padding:3px 7px;cursor:pointer;opacity:.55}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="fs" title="Schermo intero (F)">[ ]</div>
+<div id="inp"><div class="bx"><div id="inpq"></div><input id="inpt" autocomplete="off" autocorrect="off" spellcheck="false"><button id="inpok">OK</button></div></div>
+<div id="rot"><div class="ph"></div><div>RUOTA IL TELEFONO<br>IN ORIZZONTALE</div></div>
+<script>
+"use strict";
+/* ============ BASE ============ */
+const W=384,H=216;
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+cv.width=W;cv.height=H;ctx.imageSmoothingEnabled=false;
+function resize(){const s=Math.min(innerWidth/W,innerHeight/H);cv.style.width=W*s+'px';cv.style.height=H*s+'px';cv.style.left=(innerWidth-W*s)/2+'px';cv.style.top=(innerHeight-H*s)/2+'px';}
+addEventListener('resize',resize);resize();
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function hex(c){return[parseInt(c.slice(1,3),16),parseInt(c.slice(3,5),16),parseInt(c.slice(5,7),16)]}
+function mix(a,b,t){t=clamp(t,0,1);const A=hex(a),B=hex(b);return'#'+A.map((v,i)=>Math.round(v+(B[i]-v)*t).toString(16).padStart(2,'0')).join('')}
+function R(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h))}
+function ell(x,y,rx,ry,fill,stroke,lw){ctx.beginPath();ctx.ellipse(x,y,Math.max(.1,rx),Math.max(.1,ry),0,0,Math.PI*2);if(fill){ctx.fillStyle=fill;ctx.fill()}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=lw||1;ctx.stroke()}}
+
+/* ============ PIXEL FONT ============ */
+const FD={
+A:'.###.|#...#|#...#|#####|#...#|#...#|#...#',B:'####.|#...#|#...#|####.|#...#|#...#|####.',
+C:'.###.|#...#|#....|#....|#....|#...#|.###.',D:'####.|#...#|#...#|#...#|#...#|#...#|####.',
+E:'#####|#....|#....|####.|#....|#....|#####',F:'#####|#....|#....|####.|#....|#....|#....',
+G:'.###.|#...#|#....|#.###|#...#|#...#|.####',H:'#...#|#...#|#...#|#####|#...#|#...#|#...#',
+I:'.###.|..#..|..#..|..#..|..#..|..#..|.###.',J:'..###|...#.|...#.|...#.|...#.|#..#.|.##..',
+K:'#...#|#..#.|#.#..|##...|#.#..|#..#.|#...#',L:'#....|#....|#....|#....|#....|#....|#####',
+M:'#...#|##.##|#.#.#|#.#.#|#...#|#...#|#...#',N:'#...#|#...#|##..#|#.#.#|#..##|#...#|#...#',
+O:'.###.|#...#|#...#|#...#|#...#|#...#|.###.',P:'####.|#...#|#...#|####.|#....|#....|#....',
+Q:'.###.|#...#|#...#|#...#|#.#.#|#..#.|.##.#',R:'####.|#...#|#...#|####.|#.#..|#..#.|#...#',
+S:'.####|#....|#....|.###.|....#|....#|####.',T:'#####|..#..|..#..|..#..|..#..|..#..|..#..',
+U:'#...#|#...#|#...#|#...#|#...#|#...#|.###.',V:'#...#|#...#|#...#|#...#|#...#|.#.#.|..#..',
+W:'#...#|#...#|#...#|#.#.#|#.#.#|#.#.#|.#.#.',X:'#...#|#...#|.#.#.|..#..|.#.#.|#...#|#...#',
+Y:'#...#|#...#|.#.#.|..#..|..#..|..#..|..#..',Z:'#####|....#|...#.|..#..|.#...|#....|#####',
+'0':'.###.|#...#|#..##|#.#.#|##..#|#...#|.###.','1':'..#..|.##..|..#..|..#..|..#..|..#..|.###.',
+'2':'.###.|#...#|....#|...#.|..#..|.#...|#####','3':'####.|....#|....#|.###.|....#|....#|####.',
+'4':'...#.|..##.|.#.#.|#..#.|#####|...#.|...#.','5':'#####|#....|####.|....#|....#|#...#|.###.',
+'6':'.###.|#....|#....|####.|#...#|#...#|.###.','7':'#####|....#|...#.|..#..|.#...|.#...|.#...',
+'8':'.###.|#...#|#...#|.###.|#...#|#...#|.###.','9':'.###.|#...#|#...#|.####|....#|....#|.###.',
+'.':'.....|.....|.....|.....|.....|.##..|.##..',',':'.....|.....|.....|.....|.##..|..#..|.#...',
+'!':'..#..|..#..|..#..|..#..|..#..|.....|..#..','?':'.###.|#...#|....#|...#.|..#..|.....|..#..',
+"'":'..#..|..#..|.#...|.....|.....|.....|.....',':':'.....|.##..|.##..|.....|.##..|.##..|.....',
+'-':'.....|.....|.....|.###.|.....|.....|.....','/':'....#|....#|...#.|..#..|.#...|#....|#....',
+'%':'##..#|##..#|...#.|..#..|.#...|#..##|#..##','(':'...#.|..#..|.#...|.#...|.#...|..#..|...#.',
+')':'.#...|..#..|...#.|...#.|...#.|..#..|.#...','"':'.#.#.|.#.#.|.....|.....|.....|.....|.....',
+'+':'.....|..#..|..#..|#####|..#..|..#..|.....','*':'.....|.#.#.|#####|#####|.###.|..#..|.....',
+'>':'.#...|..#..|...#.|....#|...#.|..#..|.#...','€':'.###.|#....|####.|#....|####.|#....|.###.',
+'#':'.#.#.|#####|.#.#.|.#.#.|.#.#.|#####|.#.#.','=':'.....|.....|#####|.....|#####|.....|.....',
+'&':'.##..|#..#.|.##..|.#...|#.#.#|#..#.|.##.#','_':'.....|.....|.....|.....|.....|.....|#####'
+};
+const GK=Object.keys(FD),GI={};
+const atlas=document.createElement('canvas');atlas.width=GK.length*6;atlas.height=8;
+{const a=atlas.getContext('2d');a.fillStyle='#fff';GK.forEach((k,i)=>{GI[k]=i;FD[k].split('|').forEach((row,r)=>{for(let c=0;c<5;c++)if(row[c]==='#')a.fillRect(i*6+c,r,1,1)})})}
+const tint={};
+function atl(col){if(tint[col])return tint[col];const c=document.createElement('canvas');c.width=atlas.width;c.height=8;const a=c.getContext('2d');a.drawImage(atlas,0,0);a.globalCompositeOperation='source-in';a.fillStyle=col;a.fillRect(0,0,c.width,8);return tint[col]=c}
+function norm(s){return String(s).toUpperCase().replace(/[ÀÁ]/g,"A'").replace(/[ÈÉ]/g,"E'").replace(/[ÌÍ]/g,"I'").replace(/[ÒÓ]/g,"O'").replace(/[ÙÚ]/g,"U'").replace(/[’‘]/g,"'").replace(/[“”«»]/g,'"').replace(/…/g,'...').replace(/[—–]/g,'-')}
+function text(s,x,y,col='#ffffff',sc=1){const a=atl(col);x=Math.round(x);y=Math.round(y);for(let i=0;i<s.length;i++){const ch=s[i];if(ch===' ')continue;let g=GI[ch];if(g===undefined)g=GI['?'];ctx.drawImage(a,g*6,0,5,7,x+i*6*sc,y,5*sc,7*sc)}}
+function textC(s,cx,y,col,sc=1){text(s,cx-(s.length*6*sc-sc)/2,y,col,sc)}
+function textO(s,cx,y,col,sc,oc='#1a0d14'){const x=cx-(s.length*6*sc-sc)/2;for(const[dx,dy]of[[-1,0],[1,0],[0,-1],[0,1],[1,1],[-1,1],[1,-1],[-1,-1]])text(s,x+dx*sc,y+dy*sc,oc,sc);text(s,x,y,col,sc)}
+function wrap(s,n){const out=[];s.split('\n').forEach(p=>{let line='';p.split(' ').forEach(w=>{if((line+(line?' ':'')+w).length>n){out.push(line);line=w}else line+=(line?' ':'')+w});out.push(line)});return out}
+
+/* ============ AUDIO ============ */
+let AC=null,muted=false;
+function audio(){if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(AC&&AC.state==='suspended')AC.resume().catch(()=>{})}
+function tone(f,d=.06,type='square',v=.04,slide=0){if(!AC||muted)return;const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(f,t);if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(20,f+slide),t+d);g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+d+.02)}
+function noise(d=.3,v=.2,lp=1200){if(!AC||muted)return;const t=AC.currentTime,b=AC.createBuffer(1,Math.floor(AC.sampleRate*d),AC.sampleRate),a=b.getChannelData(0);for(let i=0;i<a.length;i++)a[i]=(Math.random()*2-1)*(1-i/a.length);const s=AC.createBufferSource();s.buffer=b;const f=AC.createBiquadFilter();f.type='lowpass';f.frequency.value=lp;const g=AC.createGain();g.gain.value=v;s.connect(f).connect(g).connect(AC.destination);s.start(t)}
+const SFX={
+ ok(){tone(660,.08);setTimeout(()=>tone(990,.1),70)},
+ bad(){tone(160,.25,'sawtooth',.06,-80)},
+ sel(){tone(520,.05,'square',.03)},
+ crunch(){vib([60,40,140]);noise(.35,.5,900);tone(90,.3,'square',.08,-50)},
+ sting(){tone(110,1.4,'sawtooth',.07,-55);tone(117,1.4,'sawtooth',.05,-55);noise(1,.06,300)},
+ beat(){tone(58,.12,'sine',.3,-20);setTimeout(()=>tone(52,.14,'sine',.25,-20),170)},
+ ring(){for(let i=0;i<3;i++)setTimeout(()=>{tone(880,.14,'square',.035);setTimeout(()=>tone(660,.14,'square',.035),160)},i*650)},
+ knock(){for(let i=0;i<3;i++)setTimeout(()=>{noise(.07,.5,350);tone(80,.08,'sine',.2)},i*260)}
+};
+function blip(w){if(w==='a'){if(S&&S.stage>=4)tone(130+Math.random()*60,.05,'sawtooth',.035);else tone(900+Math.random()*250,.035,'square',.022)}else if(w==='g')tone(620,.03,'triangle',.045);else if(w==='tu')tone(380,.03,'triangle',.045);else tone(500,.025,'square',.016)}
+
+/* ============ PROFILO GIOCATORE (si ricorda di te) ============ */
+const PKEY='ilmioamico_profile';
+function rid(n){const a='abcdefghijklmnopqrstuvwxyz0123456789';let s='';const r=crypto.getRandomValues(new Uint8Array(n));for(const x of r)s+=a[x%36];return s}
+let P=(()=>{let p=null;try{p=JSON.parse(localStorage.getItem(PKEY))}catch(e){}if(!p||!/^a_[a-z0-9]{8,20}$/.test(p.pid||''))p={pid:'a_'+rid(12),name:'',plays:0,endings:[],deaths:0,lastSeen:0,seenB:''};p.endings=p.endings||[];return p})();
+let PREV_SEEN=P.lastSeen||0;
+const SESSION={};
+function saveProfile(cloud){try{localStorage.setItem(PKEY,JSON.stringify(P))}catch(e){}if(cloud)cloudSave(true)}
+const BAD=['CAZZ','MERD','STRONZ','PUTTAN','TROIA','FROCI','NEGR','FIGA','VAFFA','PORCO D','DIO CAN','FUCK','SHIT','NIGG','CUNT','BITCH','HITLER','PEDO','STUPR','SUICID'];
+function clean(s,max,onlyLetters){s=norm(s||'').replace(onlyLetters?/[^A-Z' ]/g:/[^A-Z0-9 .,!?'\-:]/g,'').replace(/\s+/g,' ').trim().slice(0,max);if(BAD.some(b=>s.includes(b)))return'';return s}
+const hhmm=()=>{const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
+function timeLine(){const h=new Date().getHours(),t=hhmm();
+ if(h<5)return['Sono le '+t+'. Perché non dormi, {P}?','...Neanche io dormo mai.'];
+ if(h<12)return['Buongiorno, {P}. Sono le '+t+'.','Hai fatto colazione? Io sì. Grazie.'];
+ if(h<18)return['Sono le '+t+'. Non dovresti essere da qualche altra parte?','Invece sei qui. Con me. Mi piace.'];
+ return['Sono le '+t+'. Fuori è buio, vero?','Qui dentro è sempre buio. Ma si sta caldi.']}
+function vib(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
+async function battery(){try{const b=await navigator.getBattery();return Math.round(b.level*100)}catch(e){return null}}
+const isTouch=matchMedia('(pointer:coarse)').matches;
+
+/* ============ FIREBASE REALTIME DB (nodo: mioAmico) ============ */
+const FBCFG={apiKey:"AIzaSyC346gJHt-Dg7_bjzYw7k1D6j0tcalxht4",authDomain:"goelectric-e9299.firebaseapp.com",databaseURL:"https://goelectric-e9299-default-rtdb.firebaseio.com",projectId:"goelectric-e9299",storageBucket:"goelectric-e9299.firebasestorage.app",messagingSenderId:"81618360543",appId:"1:81618360543:web:67a9a4d38ec18400c1316a"};
+const FBV='10.12.2',ROOT='mioAmico/';
+const NET={ok:false,d:null,R:null,stats:{},online:0,notes:[],fallen:[],broadcast:null};
+async function netInit(){try{
+ const[a,d]=await Promise.all([import('https://www.gstatic.com/firebasejs/'+FBV+'/firebase-app.js'),import('https://www.gstatic.com/firebasejs/'+FBV+'/firebase-database.js')]);
+ const app=a.initializeApp(FBCFG,'mioAmico');const db=d.getDatabase(app);
+ NET.d=d;NET.R=x=>d.ref(db,ROOT+x);NET.ok=true;
+ d.onValue(NET.R('stats'),s=>{NET.stats=s.val()||{}},()=>{});
+ d.onValue(NET.R('presence'),s=>{const v=s.val()||{},now=Date.now();NET.online=Object.values(v).filter(x=>x&&now-(x.at||0)<15*60000).length},()=>{});
+ d.onValue(d.query(NET.R('notes'),d.orderByChild('at'),d.limitToLast(30)),s=>{const a=[];s.forEach(c=>{a.push(c.val())});NET.notes=a},()=>{});
+ d.onValue(d.query(NET.R('fallen'),d.orderByChild('at'),d.limitToLast(20)),s=>{const a=[];s.forEach(c=>{a.push(c.val())});NET.fallen=a},()=>{});
+ d.onValue(NET.R('broadcast'),s=>{NET.broadcast=s.val()},()=>{});
+ setPresence();cloudSave(true);
+}catch(e){NET.ok=false;console.warn('Il Mio Amico: offline',e)}}
+let presRef=null;
+function setPresence(){if(!NET.ok)return;try{const r=NET.R('presence/'+P.pid);if(presRef!==P.pid){NET.d.onDisconnect(r).remove().catch(()=>{});presRef=P.pid}NET.d.set(r,{at:Date.now(),day:S?S.day:0}).catch(()=>{})}catch(e){}}
+let lastCloud=0;
+function cloudSave(force){if(!NET.ok||!P.name)return;const now=Date.now();if(!force&&now-lastCloud<20000)return;lastCloud=now;
+ let v='-';try{v=CKMEM||localStorage.getItem(KEY)||'-'}catch(e){v=CKMEM||'-'}
+ NET.d.set(NET.R('players/'+P.pid),{v,name:P.name.slice(0,12),lastSeen:now,plays:P.plays,endings:P.endings.slice(-20).join(','),deaths:P.deaths}).catch(()=>{})}
+function inc(k){if(!NET.ok)return;NET.stats[k]=(NET.stats[k]||0)+1;NET.d.runTransaction(NET.R('stats/'+k),v=>(v||0)+1).catch(()=>{})}
+async function loadCode(code){if(!NET.ok)return'offline';if(!/^a_[a-z0-9]{8,20}$/.test(code))return'none';
+ try{const s=await NET.d.get(NET.R('players/'+code));if(!s.exists())return'none';const v=s.val();
+  P.pid=code;P.name=clean(v.name,12,true);P.plays=v.plays||0;P.endings=String(v.endings||'').split(',').filter(Boolean);P.deaths=v.deaths||0;PREV_SEEN=v.lastSeen||0;P.lastSeen=Date.now();saveProfile();
+  if(v.v&&v.v!=='-'){CKMEM=v.v;try{localStorage.setItem(KEY,v.v)}catch(e){}}else clearCk();
+  setPresence();return'ok'}catch(e){return'err'}}
+function prevHost(){const a=[...NET.fallen].reverse().map(x=>clean(x&&x.name,12,true)).filter(n=>n&&n!==P.name);return a.length?a[0]:'Marco'}
+function randNote(){const a=NET.notes.filter(n=>n&&n.text).map(n=>({t:clean(n.text,40),n:clean(n.name,12,true)})).filter(n=>n.t&&n.n&&n.n!==P.name);return a.length?a[Math.floor(Math.random()*a.length)]:null}
+setInterval(()=>{P.lastSeen=Date.now();saveProfile();setPresence();cloudSave()},60000);
+let hiddenAt=0;
+document.addEventListener('visibilitychange',()=>{if(document.hidden){hiddenAt=Date.now();document.title=P.name?'Torna qui, '+P.name.toLowerCase()+'.':'Torna qui.';P.lastSeen=Date.now();saveProfile();cloudSave(true)}else{document.title='Il Mio Amico';if(hiddenAt&&Date.now()-hiddenAt>15000&&S&&S.day>=4)SESSION.back=true}});
+
+/* ============ STATE ============ */
+let S=null;
+function newState(){return{day:1,hp:100,mente:100,legame:0,fame:0,soldi:0,food:{biscotti:0,latte:0,carne:0,pesce:0},name:'???',stage:0,veins:0,fingers:5,flags:{},demand:null,met:false,act:3,talked:false,mirror:false,hudFriend:false}}
+const FOOD={biscotti:{n:'BISCOTTI',p:5,f:25},latte:{n:'LATTE',p:4,f:20},carne:{n:'CARNE CRUDA',p:12,f:45},pesce:{n:'PESCIOLINO ROSSO',p:15,f:70}};
+const LBL={hp:['SALUTE','#ff6a7a'],mente:['MENTE','#d09cff'],legame:['LEGAME','#ffa6dc'],fame:['FAME','#ffb347'],soldi:['€','#ffe066']};
+function corr(){if(!S)return 0;return clamp((S.stage-2)/3*.65+(100-S.mente)/100*.45,0,1)}
+function theme(){return mix('#3d8fe6','#9a1f2c',corr())}
+const KEY='ilmioamico_ck_v1',KEYEND='ilmioamico_fine_cap2';let CKMEM=null;
+function saveCk(){CKMEM=JSON.stringify(S);try{localStorage.setItem(KEY,CKMEM)}catch(e){}P.lastSeen=Date.now();saveProfile();cloudSave(true);setPresence()}
+function getCk(){let s=CKMEM;if(!s){try{s=localStorage.getItem(KEY)}catch(e){}}try{return s?JSON.parse(s):null}catch(e){return null}}
+function clearCk(){CKMEM=null;try{localStorage.removeItem(KEY)}catch(e){}cloudSave(true)}
+class Over extends Error{constructor(k){super(k);this.k=k}}
+function check(){if(S.hp<=0)throw new Over('hp');if(S.mente<=0)throw new Over('mente')}
+
+/* ============ UI / SCRIPT ENGINE ============ */
+const ui={view:'start',vp:{},dialog:null,choices:null,mg:null,toasts:[],fade:1,fadeTo:0,fadeRes:null,shake:0,flash:0,glitch:0,hud:false,hover:-1,heart:0,music:false,t:0,tapRes:null,mood:null,mouth:null,px:200,py:100};
+function view(v,p={}){ui.view=v;ui.vp=p}
+function say(t,who=''){return new Promise(res=>{const tx=norm(String(t).replace(/\{P\}/g,P.name||'TU'));ui.dialog={text:tx,lines:wrap(tx,59),who,n:0,res}})}
+function promptBox(t){const tx=norm(t);ui.dialog={text:tx,lines:wrap(tx,59),who:'',n:tx.length,res:null}}
+const N=t=>say(t),T=t=>say(t,'tu'),A=t=>say(t,'a'),G=t=>say(t,'g');
+let inputOpen=false;
+function askText(q,max,low){return new Promise(res=>{const box=document.getElementById('inp'),t=document.getElementById('inpt'),ok=document.getElementById('inpok');
+ document.getElementById('inpq').textContent=q;t.value='';t.maxLength=max;t.className=low?'low':'';box.style.display='flex';inputOpen=true;setTimeout(()=>t.focus(),60);
+ const done=()=>{box.style.display='none';inputOpen=false;t.onkeydown=null;ok.onclick=null;t.blur();res(t.value)};
+ t.onkeydown=e=>{e.stopPropagation();if(e.key==='Enter')done()};ok.onclick=done})}
+async function chooseG(id,opts,cols,pos){const i=await choose(opts,cols,pos);const k='c_'+id+'_'+i;inc(k);
+ if(NET.ok){let tot=0;for(let j=0;j<opts.length;j++)tot+=NET.stats['c_'+id+'_'+j]||0;if(tot>=3)toast(Math.round((NET.stats[k]||0)/tot*100)+'% HA SCELTO COME TE','#9fd8ff')}
+ return i}
+function choose(opts,cols=1,pos='right'){return new Promise(res=>{ui.choices={opts:opts.map(norm),cols,pos,res};ui.hover=-1})}
+function pick(i){const c=ui.choices;if(!c)return;ui.choices=null;SFX.sel();c.res(i)}
+function tap(){return new Promise(r=>ui.tapRes=r)}
+function fade(to){return new Promise(r=>{ui.fadeTo=to;if(ui.fade===to)return r();ui.fadeRes=r})}
+function toast(t,c){ui.toasts.push({t:norm(t),c,a:0})}
+function st(k,d){const old=S[k];S[k]=k==='soldi'?Math.max(0,S[k]+d):clamp(S[k]+d,0,100);const r=S[k]-old;if(r){toast((r>0?'+':'')+r+' '+LBL[k][0],LBL[k][1]);if(k==='hp'&&r<0){ui.shake=4;ui.flash=.5;SFX.bad();vib(120)}if(k==='mente'&&r<=-8)ui.glitch=.25}}
+function layoutChoices(){const c=ui.choices,n=c.opts.length,cols=c.cols,rows=Math.ceil(n/cols),bh=17,gap=4;
+ let bw=cols===1?Math.max(112,Math.max(...c.opts.map(o=>o.length))*6+26):152;
+ const tw=cols*bw+(cols-1)*gap;const x0=c.pos==='center'?(W-tw)/2:W-10-tw;
+ const y0=c.pos==='center'?(ui.dialog?146:H-14)-rows*(bh+gap):(ui.dialog?146:200)-rows*(bh+gap);
+ return c.opts.map((o,i)=>({x:x0+(i%cols)*(bw+gap),y:y0+Math.floor(i/cols)*(bh+gap),w:bw,h:bh}))}
+function hitChoice(x,y){if(!ui.choices)return-1;const r=layoutChoices();for(let i=0;i<r.length;i++){const b=r[i];if(x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h)return i}return-1}
+
+/* ============ INPUT ============ */
+function pos(e){const r=cv.getBoundingClientRect();return[(e.clientX-r.left)/r.width*W,(e.clientY-r.top)/r.height*H]}
+let pdown=false,fsTried=false;
+function press(x,y,kb){
+ if(ui.mg){ui.mg.tap(x,y,kb);return}
+ if(ui.choices){if(kb)return;const i=hitChoice(x,y);if(i>=0)pick(i);return}
+ if(ui.tapRes){const r=ui.tapRes;ui.tapRes=null;SFX.sel();r();return}
+ const d=ui.dialog;if(d&&d.res){if(d.n<d.text.length)d.n=d.text.length;else{const r=d.res;d.res=null;r()}}
+}
+cv.addEventListener('pointerdown',e=>{e.preventDefault();if(inputOpen)return;audio();if(!fsTried){fsTried=true;goFS()}pdown=true;const[x,y]=pos(e);ui.px=x;ui.py=y;press(x,y)});
+addEventListener('pointermove',e=>{const[x,y]=pos(e);ui.px=x;ui.py=y;if(ui.choices)ui.hover=hitChoice(x,y);if(ui.mg&&ui.mg.move)ui.mg.move(x,y,pdown)});
+addEventListener('pointerup',()=>{pdown=false;if(ui.mg&&ui.mg.up)ui.mg.up()});
+addEventListener('pointercancel',()=>{pdown=false;if(ui.mg&&ui.mg.up)ui.mg.up()});
+addEventListener('keydown',e=>{if(inputOpen)return;audio();const k=e.key;
+ if(k==='m'||k==='M'){muted=!muted;return}
+ if(k==='f'||k==='F'){goFS(true);return}
+ if(ui.choices&&!ui.mg){const n=parseInt(k);const L=ui.choices.opts.length;
+  if(n>=1&&n<=L){pick(n-1);return}
+  if(k==='ArrowDown'||k==='ArrowRight'){ui.hover=(ui.hover+1)%L;SFX.sel();return}
+  if(k==='ArrowUp'||k==='ArrowLeft'){ui.hover=(ui.hover-1+L)%L;SFX.sel();return}
+  if((k==='Enter'||k===' ')&&ui.hover>=0){pick(ui.hover);return}return}
+ if(k===' '||k==='Enter'){e.preventDefault();if(!fsTried){fsTried=true;goFS()}press(-1,-1,true)}});
+function goFS(toggle){const d=document,el=d.documentElement;
+ if(toggle&&(d.fullscreenElement||d.webkitFullscreenElement)){try{(d.exitFullscreen||d.webkitExitFullscreen).call(d)}catch(e){}return}
+ const rq=el.requestFullscreen||el.webkitRequestFullscreen;
+ try{const p=rq&&rq.call(el,{navigationUI:'hide'});if(p&&p.then)p.then(lockO).catch(()=>{})}catch(e){}lockO()}
+function lockO(){try{if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(()=>{})}catch(e){}}
+document.getElementById('fs').addEventListener('click',()=>{audio();goFS(true)});
+document.addEventListener('fullscreenchange',()=>{document.getElementById('fs').style.display=document.fullscreenElement?'none':'block'});
+
+/* ============ CREATURE / ARM ============ */
+const CX=210,CY=102;
+const VEINS=[];(function(){let s=7;const rnd=()=>((s=s*16807%2147483647)/2147483647);for(let i=0;i<30;i++){let x=CX+(rnd()-.5)*8,y=CY+(rnd()-.5)*6,a=rnd()*Math.PI*2;const pts=[[x,y]];const L=12+rnd()*26;for(let j=0;j<L;j++){a+=(rnd()-.5)*.9;x+=Math.cos(a)*3.2;y+=Math.sin(a)*2;pts.push([x,y])}VEINS.push({pts,c:i%3===0?'#2a48c8':'#c8202e'})}})();
+function blink(t){return(t%4.2)<.14?.08:1}
+function crR(st){return[0,0,0,10,15,21][st]||0}
+function crGeom(){const r=crR(S.stage);const by=CY-r*.7+Math.sin(ui.t*2)*.6;return{x:CX,by,r,my:by+r*.42}}
+function armPath(){ctx.beginPath();ctx.moveTo(108,86);ctx.lineTo(W+4,72);ctx.lineTo(W+4,168);ctx.lineTo(108,156);ctx.closePath()}
+function drawArm(){const c=corr();const skin=mix('#f3d8c6','#d9b0a8',c),sh=mix('#dcb39a','#a87a78',c),ol='#1a1010';
+ armPath();ctx.fillStyle=skin;ctx.fill();
+ ctx.save();armPath();ctx.clip();
+ ctx.fillStyle=sh;ctx.beginPath();ctx.moveTo(108,142);ctx.lineTo(W+4,150);ctx.lineTo(W+4,170);ctx.lineTo(108,170);ctx.fill();
+ const nv=Math.min(VEINS.length,(S.stage>=2?3:0)+S.veins*6);
+ ctx.lineWidth=1;const pul=.55+Math.sin(ui.t*3)*.25;ctx.globalAlpha=pul;
+ for(let i=0;i<nv;i++){const v=VEINS[i];ctx.strokeStyle=v.c;ctx.beginPath();v.pts.forEach((p,j)=>j?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.stroke()}
+ ctx.globalAlpha=1;ctx.restore();
+ armPath();ctx.strokeStyle=ol;ctx.lineWidth=2;ctx.stroke();
+ // fist
+ ctx.beginPath();ctx.roundRect?ctx.roundRect(40,72,84,96,16):ctx.rect(40,72,84,96);ctx.fillStyle=skin;ctx.fill();ctx.strokeStyle=ol;ctx.lineWidth=2;ctx.stroke();
+ for(let i=0;i<4;i++){const y=80+i*21;const lost=S.fingers<5&&i===0;
+  ctx.beginPath();if(lost){ctx.roundRect?ctx.roundRect(34,y,22,18,6):ctx.rect(34,y,22,18)}else{ctx.roundRect?ctx.roundRect(18,y,44,18,8):ctx.rect(18,y,44,18)}ctx.fillStyle=skin;ctx.fill();ctx.stroke();
+  if(lost){R(33,y+3,4,12,'#b0121e');R(34,y+5,2,6,'#ff4a5a')}else{R(26,y+5,10,1,sh)}}
+ ell(96,78,18,9,skin,ol,2);R(80,80,30,3,skin);
+}
+function drawCreature(x,y,stage,t,o={}){
+ if(stage<=0){R(x-1,y-1,3,2,'#1a0a10');return}
+ if(stage===1){const p=Math.sin(t*3)*.7;ell(x,y,7,3.5+p,'#e3a48c','#8a4a3a',1);R(x-1,y-1,2,2,'#4a0f1f');return}
+ if(stage===2){const bl=blink(t);ell(x,y,11,6.5,'#d9937c','#4a1f1f',1.5);if(bl>.1){ell(x,y,9,5,'#ffffff');const lx=clamp((ui.px-x)/50,-1,1)*3.5,ly=clamp((ui.py-y)/50,-1,1)*1.5;ell(x+lx,y+ly,3.4,3.4,'#8a2be2');ell(x+lx,y+ly,1.6,1.6,'#000');R(x+lx-1,y+ly-2,1,1,'#fff')}else R(x-8,y,16,1,'#4a1f1f');return}
+ const r=crR(stage),by=y-r*.7+Math.sin(t*2)*.6;const mood=o.mood||'n';
+ // roots
+ ctx.lineWidth=2;ctx.strokeStyle='#5a1f6a';if(!o.noroots)for(let i=0;i<stage;i++){const k=i-(stage-1)/2;ctx.beginPath();ctx.moveTo(x+k*r*.35,by+r*.6);ctx.quadraticCurveTo(x+k*9,y+8,x+k*15+Math.sin(t+i)*2,y+14+Math.abs(k)*3);ctx.stroke()}
+ // hair
+ const n=stage*3;for(let i=0;i<n;i++){const a=-Math.PI+.2+i/(n-1)*(Math.PI-.4);const L=r*(1+stage*.28)+(i%3)*3;const sx=x+Math.cos(a)*r*.85,sy=by+Math.sin(a)*r*.85;
+  ctx.strokeStyle=i%2?'#a447d0':'#7a2aa0';ctx.lineWidth=stage>=5?3:2;ctx.beginPath();ctx.moveTo(sx,sy);
+  const cx1=sx+Math.cos(a)*L*.55,cy1=sy+Math.sin(a)*L*.4+Math.sin(t*1.7+i)*2;const ex=sx+Math.cos(a)*L*.7+Math.sin(t*2+i)*3,ey=sy+L*.55;
+  ctx.quadraticCurveTo(cx1,cy1,ex,ey);ctx.stroke();R(ex-1,ey-1,2,2,'#c77be8')}
+ // body
+ ell(x,by,r,r*.92,stage>=5?'#d98d4a':'#eaa85e','#2a1410',2);
+ ell(x-r*.35,by-r*.45,r*.28,r*.16,'#ffd59a');
+ // eyes
+ const bl=blink(t+1.3),ex=r*.38,ey=by-r*.05,er=Math.max(2,r*.22);
+ if(mood==='happy'&&stage<5){ctx.strokeStyle='#120a14';ctx.lineWidth=1.6;for(const s of[-1,1]){ctx.beginPath();ctx.arc(x+s*ex,ey+er*.4,er*.8,Math.PI*1.1,Math.PI*1.9);ctx.stroke()}}
+ else{for(const s of[-1,1]){ell(x+s*ex,ey,er*.9,er*1.2*bl,'#120a14');if(bl>.5){const red=mood==='angry'||(stage>=4&&s>0);R(x+s*ex-er*.35,ey-er*.6,2,2,red?'#ff2a2a':'#ffffff');if(stage===3&&mood!=='angry')R(x+s*ex+er*.2,ey+er*.2,1,1,'#ffffff')}}
+  if(mood==='angry'){ctx.strokeStyle='#120a14';ctx.lineWidth=1.5;for(const s of[-1,1]){ctx.beginPath();ctx.moveTo(x+s*(ex+er),ey-er*1.6);ctx.lineTo(x+s*(ex-er*.6),ey-er*1.0);ctx.stroke()}}}
+ if(stage>=5){ell(x,by-r*.55,er*.8,er*bl,'#120a14');if(bl>.5)ell(x,by-r*.55,er*.4,er*.4,'#ff2a2a')}
+ if(stage<=4){ell(x-ex*1.45,ey+er*1.4,er*.7,er*.32,'#ff8fa8');ell(x+ex*1.45,ey+er*1.4,er*.7,er*.32,'#ff8fa8')}
+ // mouth
+ const m=o.mouth||0,my=by+r*.42;
+ if(stage===3){if(m>.1)ell(x,my,2.6,.6+2.2*m,'#5a0a1a');else{R(x-2,my,1,1,'#3a1010');R(x-1,my+1,2,1,'#3a1010');R(x+1,my,1,1,'#3a1010')}}
+ else{const mw=stage===4?r*.33:r*.68,mh=1+m*(stage===4?4:10)+(stage>=5?2:0);ell(x,my,mw,mh,'#3a0510','#1a0505',1);
+  for(let k=-mw+1;k<mw-1;k+=3){R(x+k,my-mh+.5,2,2,'#ffffff');if(stage>=5||m>.3)R(x+k+1,my+mh-2,2,2,'#f0f0e0')}}
+}
+
+/* ============ VIEWS ============ */
+function tendrils(a){if(a<=0)return;ctx.lineWidth=2;for(let i=0;i<Math.floor(a*12);i++){const fromL=i%2===0;let x=fromL?0:W,y=(i*37)%140;ctx.strokeStyle=i%3?'#4a1050':'#2a0a30';ctx.beginPath();ctx.moveTo(x,y);for(let j=1;j<10;j++){x+=(fromL?1:-1)*(5+a*6);y+=Math.sin(ui.t*.8+i+j*.7)*4;ctx.lineTo(x,y)}ctx.stroke()}}
+function drawRoom(p){const tm=p.time||'giorno',c=corr();
+ const wall={giorno:'#cfe3f0',sera:'#ecc9ab',notte:'#262b47'}[tm];
+ R(0,0,W,H,mix(wall,'#2a0f18',c*.7));
+ for(let x=0;x<W;x+=16)R(x,0,8,150,'rgba(255,255,255,0.06)');
+ R(0,150,W,66,mix(tm==='notte'?'#3a2e2a':'#c09468','#1a0a0c',c*.6));
+ for(let x=0;x<W;x+=32)R(x,150,1,66,'rgba(0,0,0,.15)');R(0,150,W,2,'rgba(0,0,0,.3)');
+ const sky={giorno:'#8fd0ff',sera:'#ff9a5a',notte:'#0b0f25'}[tm];
+ R(36,36,84,64,'#f4f4f4');R(40,40,76,56,mix(sky,'#300008',c*.5));
+ if(tm==='notte'){R(96,48,8,8,c>.5?'#ff5050':'#f8f0c0');for(let i=0;i<9;i++)R(44+((i*37)%68),44+((i*23)%44),1,1,'#fff')}
+ else if(tm==='sera'){R(50,84,16,8,'#ffd27a')}else{R(92,48,10,10,'#fff6a0');R(50,58,20,6,'#fff');R(56,54,10,4,'#fff')}
+ R(77,40,2,56,'#f4f4f4');R(40,67,76,2,'#f4f4f4');
+ R(28,30,100,4,'#c96b88');R(30,34,9,72,'#f29bb5');R(117,34,9,72,'#f29bb5');
+ R(150,44,34,42,'#fff6f0');R(150,44,34,1,'#d9b7c0');R(150,85,34,1,'#d9b7c0');
+ text('*',161,54,'#ff7aa8',2);
+ R(140,118,58,6,'#8a5a3a');R(144,124,4,28,'#6a4028');R(190,124,4,28,'#6a4028');
+ R(178,104,3,14,'#555');R(172,98,15,7,tm==='notte'?'#ffd060':'#ffe08a');
+ if(tm==='notte'){ctx.globalAlpha=.12;ell(180,112,30,20,'#ffd060');ctx.globalAlpha=1}
+ R(206,96,10,62,'#6a4028');R(214,118,150,40,'#7a5236');R(216,110,146,16,'#fafafa');R(216,122,146,30,mix('#7fb0e0','#4a1830',c));
+ R(220,104,34,12,'#ffffff');R(220,115,34,1,'#d0d0d0');
+ // peluche
+ ell(300,112,7,6,'#f2c2d0','#7a4a5a',1);ell(296,104,2,5,'#f2c2d0');ell(304,104,2,5,'#f2c2d0');R(298,111,1,1,'#000');R(302,111,1,1,'#000');
+ if(c>.25){ctx.globalAlpha=.5;ell(70,170,18,5,'#4a0a12');ell(260,40,6,10,'#3a0a14');ctx.globalAlpha=1}
+ tendrils(c-.2);
+ if(tm==='notte')R(0,0,W,H,'rgba(0,0,20,.32)');
+}
+function drawWrist(){const c=corr();R(0,0,W,H,mix('#eef2f5','#3a1a22',c*.8));
+ for(let x=10;x<W;x+=58)R(x,0,18,H,mix('#e1e8ee','#301520',c*.8));
+ R(0,0,W,6,'rgba(0,0,0,.08)');
+ drawArm();
+ let mouth=0;const d=ui.dialog;if(ui.mouth!=null)mouth=ui.mouth;else if(d&&d.who==='a'&&d.n<d.text.length)mouth=Math.abs(Math.sin(ui.t*18));
+ drawCreature(CX,CY,S.stage,ui.t,{mood:ui.mood,mouth});
+}
+function drawMirror(p){const w=p.w||0,c=corr();R(0,0,W,H,mix('#dfeef2','#2a1a1e',c*.7));
+ for(let x=0;x<W;x+=16)R(x,0,1,H,'rgba(0,0,0,.08)');for(let y=0;y<H;y+=16)R(0,y,W,1,'rgba(0,0,0,.08)');
+ R(108,10,168,142,'#b8c2c8');R(114,16,156,130,mix('#9fb8c4','#40202a',c*.6));
+ ctx.save();ctx.beginPath();ctx.rect(114,16,156,130);ctx.clip();
+ ell(192,152,62,36,'#2e3440');ell(192,82,24,29,'#2e3440');
+ const dl=w>=1&&((ui.t+.25)%3.3)<.18;
+ if(!dl){R(181,78,4,3,w>=3?'#ff3030':'#e8e8e8');R(199,78,4,3,w>=3?'#ff3030':'#e8e8e8')}
+ if(w>=2){ctx.strokeStyle='#c0202e';ctx.lineWidth=2;ctx.beginPath();ctx.arc(192,90,10,.15*Math.PI,.85*Math.PI);ctx.stroke()}
+ if(w>=3){ctx.save();ctx.translate(226,124);ctx.scale(.8,.8);drawCreature(0,0,5,ui.t,{noroots:true});ctx.restore()}
+ ctx.restore();
+ R(114,16,30,2,'rgba(255,255,255,.4)');R(140,16,2,30,'rgba(255,255,255,.2)');
+ R(130,162,124,16,'#f4f4f4');R(130,176,124,4,'#c8d0d4');R(186,154,10,8,'#c0c0c0');
+ tendrils(c-.3);
+}
+function drawWork(){const c=corr();R(0,0,W,H,mix('#d9dccf','#2a1418',c*.6));
+ for(let y=20;y<92;y+=6)R(270,y,96,4,mix('#eef0e6','#3a2228',c*.6));
+ R(0,140,W,76,mix('#8a7a66','#24120f',c*.5));R(0,138,W,3,'#5a4a3a');
+ R(110,30,164,98,'#1a1a1a');R(116,36,152,84,mix('#2f6fd6','#5a0a14',c));
+ for(let i=0;i<8;i++)R(124,44+i*9,30+((i*53)%96),3,'rgba(255,255,255,.55)');
+ R(184,128,16,10,'#1a1a1a');R(166,137,52,4,'#1a1a1a');
+ R(138,158,108,18,'#e2e2e2');for(let j=0;j<3;j++)for(let i=0;i<12;i++)R(142+i*8.5,161+j*5,6,3,'#aaaaaa');
+ R(300,150,16,18,'#f4f4f4');R(316,154,4,8,'#f4f4f4');R(302,151,12,3,'#6a3a1a');
+ R(40,116,22,22,'#b06a3a');ell(51,108,13,11,'#4caf50');ell(44,102,6,7,'#5ec462');
+}
+function drawShop(){const c=corr();R(0,0,W,H,mix('#eef4ee','#2a1a1a',c*.6));
+ for(let x=0;x<W;x+=16)for(let y=150;y<H;y+=16)if(((x+y)/16)%2===0)R(x,y,16,16,'rgba(0,0,0,.08)');
+ const fl=c>.3&&Math.random()<.05;R(40,8,120,4,fl?'#555':'#fffbe0');R(224,8,120,4,'#fffbe0');
+ const cols=['#ff7a7a','#ffd060','#7ad0ff','#a0e070','#ffa0d0','#c0a0ff','#ffffff'];
+ for(let s=0;s<3;s++){const y=40+s*36;R(20,y+26,344,4,'#9a8a7a');for(let i=0;i<20;i++){const h=12+((i*7+s*5)%12);R(24+i*17,y+26-h,13,h,cols[(i*3+s)%cols.length]);R(24+i*17,y+26-h,13,2,'rgba(255,255,255,.4)')}}
+ R(0,150,W,2,'rgba(0,0,0,.3)');
+}
+function drawPhone(p){R(0,0,W,H,mix('#262b47','#1a0a10',corr()));
+ R(138,6,108,206,'#111');R(142,18,100,180,'#f2f4f8');R(176,10,32,3,'#333');
+ if(p.mode==='call'){const k=Math.floor(ui.t*2)%2;ell(192,70,20,20,'#f29bb5');text('G',189,66,'#ffffff');textC(norm(p.name),192,100,'#222222');textC('CHIAMATA',192,116,'#666666');textC('IN ARRIVO',192,126,'#666666');ell(166,170,10,10,'#e04040');ell(218,170,10,10,k?'#40c060':'#2a9a4a')}
+ else if(p.mode==='search'){R(146,24,92,12,'#ffffff');R(146,24,92,1,'#bbbbbb');R(146,35,92,1,'#bbbbbb');text(norm(p.q).slice(0,15),149,27,'#333333');p.lines.forEach((l,i)=>{const bad=i>=3;text(norm(l).slice(0,15),149,46+i*22,bad?'#c01020':'#1a4ab0');R(149,55+i*22,60+((i*29)%26),2,'#cccccc')})}
+ else{p.lines.forEach((l,i)=>text(norm(l).slice(0,15),148,28+i*11,'#222222'))}
+}
+function drawBlack(){R(0,0,W,H,'#000000')}
+function drawCard(p){R(0,0,W,H,'#050306');for(let i=0;i<30;i++)R((i*97+Math.floor(ui.t*8)*13)%W,(i*53)%H,1,1,'#222');
+ textO(norm(p.title),W/2,(p.sub&&p.sub.length>3)?22:70,'#ffffff',2,'#3a1020');
+ (p.sub||[]).forEach((s,i)=>textC(norm(s),W/2,((p.sub.length>3)?50:100)+i*12,i===0&&p.sub.length<=3?'#ff7aa8':'#c8c8d8'));
+ if(ui.tapRes&&Math.floor(ui.t*2)%2===0)textC('TOCCA PER CONTINUARE',W/2,196,'#777788');
+}
+function drawTitle(){const gl=(ui.t%7)>6.82;
+ R(0,0,W,H,gl?'#3a0010':'#ffd8e6');
+ if(!gl)for(let i=-H;i<W;i+=24){ctx.fillStyle='#ffe6ef';ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i+12,0);ctx.lineTo(i+12+H,H);ctx.lineTo(i+H,H);ctx.fill()}
+ for(let i=0;i<8;i++){const y=(H-((ui.t*14+i*40)%(H+20)));text('*',(i*53)%W,y,gl?'#801020':'#ff9ec0')}
+ textO('IL MIO AMICO',W/2,18,gl?'#ff3030':'#ffffff',3,gl?'#000000':'#c0306a');
+ textC(gl?'NON ERA UNA DOMANDA.':'UN GIOCO CARINO. PROMESSO.',W/2,48,gl?'#ff6060':'#c0306a');
+ ctx.save();ctx.translate(192,118+Math.sin(ui.t*3)*3);ctx.scale(2,2);
+ const ss=S;S=S||newState();drawCreature(0,0,gl?5:3,ui.t,{mood:gl?'angry':'happy',noroots:true});S=ss;ctx.restore();
+ const info=NET.ok?'OSPITI SVEGLI ORA: '+NET.online+'   OSPITI TOTALI: '+(NET.stats.ospiti||0):'OFFLINE';text(info,6,206,gl?'#ff6060':'#c0306a');
+ text(hhmm(),W-34,206,gl?'#ff6060':'#c0306a');
+}
+function drawStart(){R(0,0,W,H,'#000000');textO('IL MIO AMICO',W/2,52,'#ffffff',3,'#5a1030');
+ if(Math.floor(ui.t*2)%2===0)textC('TOCCA PER INIZIARE',W/2,110,'#ff9ec0');
+ textC('SI GIOCA IN ORIZZONTALE, A SCHERMO INTERO',W/2,134,'#8888aa');
+ textC('PC: CLIC / SPAZIO / TASTI 1-9   M AUDIO   F SCHERMO',W/2,176,'#555566');
+ textC('CONTIENE TEMI HORROR E SANGUE. PEGI 16.',W/2,190,'#555566')}
+const VIEWS={room:drawRoom,wrist:drawWrist,mirror:drawMirror,work:drawWork,shop:drawShop,phone:drawPhone,black:drawBlack,card:drawCard,title:drawTitle,start:drawStart};
+
+/* ============ HUD / DIALOG ============ */
+function panel(x,y,w,h,col){x=Math.round(x);y=Math.round(y);R(x,y,w,h,col);R(x,y,w,1,'rgba(255,255,255,.35)');R(x,y+h-1,w,1,'rgba(0,0,0,.25)');const b=mix(col,'#0a1a3a',.55);R(x+w-7,y-2,9,2,b);R(x+w,y-2,2,7,b);R(x-2,y+h-5,2,7,b);R(x-2,y+h,9,2,b)}
+function bar(x,y,w,v,c){R(x,y,w,5,'#0d1530');R(x,y,Math.round(w*v/100),5,c)}
+function drawHUD(){const th=theme();
+ panel(4,4,58,13,th);const ck=hhmm();text('G'+S.day+' '+ck.slice(0,2)+(Math.floor(ui.t*2)%2?':':' ')+ck.slice(3),8,7);
+ panel(68,4,72,13,th);text('SALUTE',71,7,'#ffd0d6');bar(110,8,27,S.hp,'#ff5a6a');
+ panel(146,4,66,13,th);text('MENTE',149,7,'#ead6ff');bar(182,8,27,S.mente,'#c58cff');
+ panel(218,4,40,13,th);text('€'+S.soldi,222,7,'#ffe066');
+ if(S.hudFriend){panel(264,4,116,13,mix('#c060d8','#7a0a20',corr()));text('FAME',268,7,'#ffe0b0');bar(294,8,40,S.fame,S.fame>=80?'#ff3030':'#ffb347');text('*'+S.legame,340,7,'#ffc0e6')}}
+function drawDialog(){const d=ui.dialog;if(!d)return;
+ const th=d.who==='a'?mix('#b54fd0','#7a0a20',corr()):d.who==='g'?'#2f9a6a':d.who==='tu'?mix('#3a6fb8','#5a1a2a',corr()):theme();
+ panel(6,152,372,58,th);
+ if(d.who){const nm=d.who==='a'?norm(S.name):d.who==='g'?'GIULIA':'TU';panel(12,142,nm.length*6+10,12,mix(th,'#000000',.3));text(nm,17,145)}
+ let left=Math.floor(d.n);for(let i=0;i<d.lines.length&&left>0;i++){let s=d.lines[i].slice(0,left);left-=d.lines[i].length+1;
+  if(d.who==='a'&&S&&S.stage>=4&&Math.random()<.05){const j=Math.floor(Math.random()*s.length);s=s.slice(0,j)+'#%&?/'[Math.floor(Math.random()*5)]+s.slice(j+1)}
+  text(s,13,158+i*10)}
+ if(d.res&&d.n>=d.text.length&&!ui.choices&&Math.floor(ui.t*3)%2===0){R(366,201,6,2,'#fff');R(367,203,4,1,'#fff');R(368,204,2,1,'#fff')}}
+function drawChoices(){if(!ui.choices)return;const rs=layoutChoices(),th=theme();
+ ui.choices.opts.forEach((o,i)=>{const b=rs[i],hv=ui.hover===i;panel(b.x,b.y,b.w,b.h,hv?mix(th,'#ffffff',.3):th);text(String(i+1),b.x+5,b.y+5,'#bcd4ff');text(o,b.x+16,b.y+5,'#ffffff')})}
+function drawToasts(){ui.toasts.forEach((t,i)=>{ctx.globalAlpha=clamp(2-t.a,0,1);const s=t.t;const x=W-8-s.length*6,y=24+i*11-t.a*4;R(x-3,y-2,s.length*6+5,11,'rgba(0,0,0,.55)');text(s,x,y,t.c);ctx.globalAlpha=1})}
+
+/* ============ MINIGAMES ============ */
+function fmtT(t){const m=Math.floor(t/60),s=Math.floor(t%60),c=Math.floor((t*100)%100);return[m,s,c].map(v=>String(v).padStart(2,'0')).join(':')}
+function mgTiming(p){ui.dialog=null;return new Promise(res=>{
+ const m={rounds:p.rounds||3,i:0,rs:[],pos:0,dir:1,sp:p.speed||.9,zc:.3+Math.random()*.4,zw:p.zone||.22,t:0,fl:0,last:null,label:norm(p.label||'')};
+ m.update=dt=>{m.t+=dt;if(m.fl>0){m.fl-=dt;if(m.fl<=0){if(m.i>=m.rounds){ui.mg=null;res(m.rs.filter(Boolean).length)}else{m.zc=.15+Math.random()*.7;m.sp*=1.18;m.pos=Math.random()<.5?0:1;m.dir=m.pos?-1:1}}return}
+  m.pos+=m.dir*m.sp*dt;if(m.pos>1){m.pos=1;m.dir=-1}if(m.pos<0){m.pos=0;m.dir=1}};
+ m.tap=()=>{if(m.fl>0)return;const hit=Math.abs(m.pos-m.zc)<m.zw/2;m.rs.push(hit);m.last=hit;m.i++;m.fl=.65;if(hit)SFX.ok();else{SFX.bad();ui.shake=3}};
+ m.draw=()=>{const th=theme();R(0,0,W,H,'rgba(0,0,0,.25)');
+  panel(8,24,368,38,th);for(let k=0;k<m.rounds;k++){const x=16+k*22,y=32;if(k<m.rs.length){if(m.rs[k]){R(x,y,16,16,'#ffffff');R(x+3,y+3,10,10,'#3ce06a')}else{R(x,y,16,16,'#ffffff');text('X',x+5,y+5,'#e02040')}}else{R(x,y,16,2,'#fff');R(x,y+14,16,2,'#fff');R(x,y,2,16,'#fff');R(x+14,y,2,16,'#fff')}}
+  const pc=m.rs.length?Math.round(m.rs.filter(Boolean).length/m.rounds*100):0;text('SUCCESSO',292,28,'#dfe9ff');textC(pc+'%',334,40,'#ffffff',2);
+  panel(8,68,70,14,th);text('ROUND '+Math.min(m.i+1,m.rounds),14,72);
+  panel(86,68,290,14,th);text('TOCCA AL MOMENTO GIUSTO',94,72);
+  panel(236,88,140,14,th);text('TEMPO '+fmtT(m.t),246,92);
+  panel(40,110,304,30,mix(th,'#0a1530',.5));text(m.label,48,113,'#ffe066');
+  R(48,124,288,10,'#0d1530');R(48+(m.zc-m.zw/2)*288,124,m.zw*288,10,'#3ce06a');R(48+(m.zc-m.zw/2)*288,124,m.zw*288,2,'#9affb0');
+  const cx=48+m.pos*288;R(cx-2,119,5,20,'#000');R(cx-1,120,3,18,'#fff');
+  if(m.fl>0)textO(m.last?'OK!':'MANCATO',W/2,150,m.last?'#3ce06a':'#ff4060',2)};
+ ui.mg=m})}
+function mgRub(p){ui.dialog=null;return new Promise(res=>{
+ const m={t:0,T:p.time||7,v:0,need:p.need||320,bites:0,lx:null,ly:null,danger:p.danger||0,red:false,cool:0,parts:[]};
+ const done=()=>{ui.mg=null;ui.mood=null;res({ok:m.v>=m.need,bites:m.bites})};
+ const g=()=>crGeom();
+ const rub=(d,x,y)=>{if(m.red){if(m.cool<=0){m.bites++;m.cool=.7;st('hp',-4);SFX.crunch()}}else{m.v+=d;if(Math.random()<.12){tone(800+Math.random()*400,.04,'sine',.03);m.parts.push({x,y,a:0})}}};
+ m.update=dt=>{m.t+=dt;m.cool-=dt;m.red=!!m.danger&&(m.t%1.9)>1.3;ui.mood=m.red?'angry':'happy';m.parts.forEach(q=>q.a+=dt);m.parts=m.parts.filter(q=>q.a<1);if(m.v>=m.need||m.t>=m.T)done()};
+ m.tap=(x,y,kb)=>{if(kb){rub(24,CX,CY-20);return}m.lx=x;m.ly=y};
+ m.move=(x,y,down)=>{if(!down||m.lx==null)return;const d=Math.hypot(x-m.lx,y-m.ly);m.lx=x;m.ly=y;const G=g();if(Math.hypot(x-G.x,y-G.by)<G.r+22)rub(d,x,y)};
+ m.up=()=>{m.lx=null};
+ m.draw=()=>{const th=theme();panel(8,24,368,30,th);text('ACCAREZZA '+norm(S.name),16,28);text(m.danger?'ATTENZIONE AGLI OCCHI ROSSI!':'STROFINA IL DITO SOPRA DI LUI',16,40,m.danger?'#ffb0b0':'#dfe9ff');
+  R(228,30,120,8,'#0d1530');R(228,30,120*clamp(m.v/m.need,0,1),8,'#ff8fc8');text('*',352,30,'#ff8fc8');text(fmtT(Math.max(0,m.T-m.t)),262,42,'#ffffff');
+  m.parts.forEach(q=>{ctx.globalAlpha=1-q.a;text('*',q.x,q.y-q.a*20,'#ff6fb0');ctx.globalAlpha=1})};
+ ui.mg=m})}
+function drawFood(k,x,y){if(k==='biscotti'){R(x-4,y-3,8,6,'#c48a4a');R(x-2,y-1,1,1,'#5a3010');R(x+1,y,1,1,'#5a3010')}else if(k==='latte'){R(x-3,y-5,6,9,'#ffffff');R(x-3,y-5,6,2,'#4a90e2')}else if(k==='carne'){ell(x,y,5,4,'#c0262e');ell(x+1,y-1,2,1.5,'#f4a0a0')}else{ell(x,y,4,2.5,'#ff8a1e');R(x+3,y-2,3,4,'#ff8a1e');R(x-2,y-1,1,1,'#000')}}
+function mgFeed(p){ui.dialog=null;return new Promise(res=>{
+ const m={t:0,T:p.time||9,need:p.need||3,hits:0,miss:0,toss:0,ok:false,food:p.food||'biscotti'};
+ const open=()=>Math.max(0,Math.sin(m.t*2.4-1));
+ m.update=dt=>{m.t+=dt;ui.mouth=open();if(m.toss>0)m.toss-=dt;if((m.hits>=m.need||m.t>=m.T)&&m.toss<=0){ui.mg=null;ui.mouth=null;res(m.hits)}};
+ m.tap=()=>{if(m.toss>0||m.hits>=m.need)return;m.toss=.35;m.ok=open()>.5;if(m.ok){m.hits++;tone(300,.08,'square',.05,-150);setTimeout(()=>noise(.1,.25,700),120)}else{m.miss++;SFX.bad()}};
+ m.draw=()=>{const th=theme(),G=crGeom();panel(8,24,368,30,th);text('NUTRI '+norm(S.name),16,28);text('TOCCA QUANDO APRE LA BOCCA',16,40,'#dfe9ff');
+  for(let i=0;i<m.need;i++){R(262+i*16,30,12,12,i<m.hits?'#3ce06a':'#0d1530');drawFood(m.food,268+i*16,36)}
+  text(fmtT(Math.max(0,m.T-m.t)),314,44,'#ffffff');
+  if(m.toss>0){const k=1-m.toss/.35;const x=G.x+(m.ok?0:30*k),y=60+(G.my-60)*k+(m.ok?0:k*40);drawFood(m.food,x,y)}else drawFood(m.food,G.x,64+Math.sin(ui.t*6)*2)};
+ ui.mg=m})}
+
+/* ============ LOOP ============ */
+const MEL=[523,659,784,659,587,698,880,698,523,659,784,1047,988,784,659,587];let mi=0,mt=0,ht=0;
+const scan=document.createElement('canvas');scan.width=W;scan.height=H;{const s=scan.getContext('2d');s.fillStyle='rgba(0,0,0,.07)';for(let y=0;y<H;y+=2)s.fillRect(0,y,W,1)}
+let last=performance.now();
+function update(dt){ui.t+=dt;const d=ui.dialog;
+ if(d&&d.n<d.text.length){const b=Math.floor(d.n);d.n+=dt*48;const a=Math.floor(d.n);if(a!==b&&a%2===0&&d.text[a]&&d.text[a]!==' ')blip(d.who)}
+ if(ui.fade!==ui.fadeTo){const s=dt*2.2;ui.fade=ui.fade<ui.fadeTo?Math.min(ui.fadeTo,ui.fade+s):Math.max(ui.fadeTo,ui.fade-s);if(ui.fade===ui.fadeTo&&ui.fadeRes){const r=ui.fadeRes;ui.fadeRes=null;r()}}
+ ui.shake=Math.max(0,ui.shake-dt*10);ui.flash=Math.max(0,ui.flash-dt);ui.glitch=Math.max(0,ui.glitch-dt);
+ ui.toasts.forEach(t=>t.a+=dt);ui.toasts=ui.toasts.filter(t=>t.a<2);
+ if(ui.mg)ui.mg.update(dt);
+ if(ui.music&&!ui.mg){mt-=dt;if(mt<=0){mt=.3;const c=corr();const f=MEL[mi++%16]*(1-c*.09*Math.random());tone(f,.25,'triangle',.02);if(mi%4===1)tone(f/2,.4,'sine',.02)}}
+ if(ui.heart){ht-=dt;if(ht<=0){ht=.85;SFX.beat()}}
+ if(S&&S.mente<45&&ui.view!=='title'&&Math.random()<.004)ui.glitch=.15}
+function draw(){ctx.save();if(ui.shake>0)ctx.translate(Math.round((Math.random()-.5)*ui.shake*2),Math.round((Math.random()-.5)*ui.shake*2));
+ (VIEWS[ui.view]||drawBlack)(ui.vp);
+ if(ui.hud&&S&&!['card','black','title','start'].includes(ui.view))drawHUD();
+ if(ui.mg)ui.mg.draw();else{drawDialog();drawChoices()}
+ drawToasts();ctx.restore();
+ const c=corr();if(c>.15&&!['title','start','card'].includes(ui.view)){const g=ctx.createRadialGradient(W/2,H/2,H*.35,W/2,H/2,H*.95);g.addColorStop(0,'rgba(60,0,10,0)');g.addColorStop(1,'rgba(60,0,10,'+(c*.7).toFixed(2)+')');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
+ if(ui.glitch>0){for(let i=0;i<4;i++){const y=Math.floor(Math.random()*H),h=2+Math.floor(Math.random()*12),dx=Math.round((Math.random()-.5)*18);ctx.drawImage(cv,0,y,W,h,dx,y,W,h)}R(0,0,W,H,'rgba(255,0,60,.08)')}
+ if(ui.flash>0)R(0,0,W,H,'rgba(200,0,20,'+(ui.flash*.6).toFixed(2)+')');
+ ctx.drawImage(scan,0,0);
+ if(ui.fade>0)R(0,0,W,H,'rgba(0,0,0,'+ui.fade.toFixed(3)+')')}
+function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;update(dt);draw();requestAnimationFrame(loop)}
+requestAnimationFrame(loop);
+
+/* ============ STORY HELPERS ============ */
+async function card(title,sub){ui.dialog=null;ui.choices=null;view('card',{title,sub});await fade(0);await tap();await fade(1)}
+async function night(t){view('black');ui.dialog=null;await fade(0);if(t)await N(t);await fade(1);ui.dialog=null}
+async function morning(){view('room',{time:'giorno'});ui.dialog=null;ui.music=S.stage<4;await fade(0)}
+
+/* ============ CAPITOLO 1 ============ */
+async function chapter1(){
+ ui.hud=false;await card('CAPITOLO 1',['IL PUNTINO']);
+ S.day=1;ui.hud=true;ui.music=true;await morning();
+ await N('Driiin. Driiin. Sono le 7:02.');
+ await N('Un altro giorno. Uguale a tutti gli altri.');
+ await N('Ti stiracchi. Ti prude il polso sinistro.');
+ view('wrist');
+ await N('Guardi il polso. C\'è un puntino nero.');
+ await N('Piccolissimo. Più piccolo di un neo.');
+ await N('Ieri sera non c\'era. O forse sì?');
+ const c=await chooseG('polso',['Grattarlo','Disinfettarlo','Ignorarlo']);
+ if(c===0){S.flags.gratta=1;await N('Gratti. Gratti forte.');st('hp',-3);await N('Il puntino non va via. Sembra... più in profondità.')}
+ else if(c===1){S.flags.alcol=1;await N('Versi un po\' di alcol. Brucia.');ui.glitch=.3;await N('Per un istante il puntino si ritrae. Come un occhio che si chiude.');st('mente',-5);await T('...Me lo sono immaginato.')}
+ else{await N('Sarà una puntura di zanzara. Niente di che.');st('mente',2)}
+ await N('Sei in ritardo. Devi andare al lavoro.');
+ await work(true);
+ view('room',{time:'sera'});
+ await N('La sera, a casa, controlli di nuovo il polso.');
+ view('wrist');
+ await N('Il puntino è ancora lì.');
+ await N('Forse è un po\' più grande.');
+ await night('Quella notte sogni un cielo che cade.');
+ // GIORNO 2
+ S.day=2;S.stage=1;await morning();
+ await N('Giorno 2.');
+ view('wrist');
+ await N('Il puntino è diventato un bozzo. Tiepido.');
+ await N('Pulsa a tempo con il tuo cuore.');
+ ui.heart=1;await N('No. Non proprio a tempo. Sempre un battito dopo.');ui.heart=0;
+ const c2=await chooseG('bozzo',['Chiamare il medico','Cercare su internet','Coprirlo con un cerotto']);
+ if(c2===0){view('phone',{mode:'msg',lines:['STUDIO MEDICO','','PRIMA DATA','LIBERA:','','TRA 23 GIORNI.','','GRAZIE PER','LA PAZIENZA.']});await N('Il primo appuntamento libero è tra tre settimane.');st('mente',-3);await T('Fantastico.')}
+ else if(c2===1){S.flags.web=1;view('phone',{mode:'search',q:'BOZZO POLSO',lines:['CISTI SEBACEA','PUNTURA RAGNO','UOVA SOTTOPELLE','NON TOCCARLO','LUI TI SENTE']});await N('Scorri i risultati.');ui.glitch=.4;await N('Gli ultimi due non hanno un sito. Non hanno un link. Solo testo rosso.');st('mente',-10);await N('Chiudi il telefono.')}
+ else{S.flags.cerotto=1;await N('Ci metti sopra un cerotto. Occhio non vede, cuore non duole.');await N('Il cerotto si solleva. Si abbassa. Si solleva.');await N('Come se respirasse.');st('mente',-3)}
+ view('room',{time:'sera'});
+ await N('La giornata passa lenta. Il polso è caldo.');
+ view('wrist');S.stage=2;ui.shake=5;ui.music=false;SFX.sting();
+ await N('Poi, la sera, il bozzo si apre.');
+ await N('È un occhio.');
+ await N('Ti sta guardando.');
+ const c3=await chooseG('occhio',['Urlare','Restare immobile','Salutarlo']);
+ if(c3===0){S.flags.urlo=1;await N('Urli. L\'occhio si chiude di scatto.');st('mente',-10);await N('Sembra spaventato. ...Spaventato?')}
+ else if(c3===1){await N('Restate immobili. Vi fissate per un minuto intero.');await N('Sbatte la palpebra. Una volta. Due volte.');await N('Ti accorgi di aver fatto lo stesso. Nello stesso istante.');st('mente',-5)}
+ else{S.flags.ciao=1;await T('...Ciao?');await N('L\'occhio si stringe. Sembra un sorriso.');st('legame',10)}
+ await night('Non riesci a dormire. Qualcosa, sotto la pelle, si gira e si rigira.');
+ // GIORNO 3
+ S.day=3;S.stage=3;await morning();
+ await N('Giorno 3. Ti sveglia una vocina.');
+ view('wrist');ui.mood='happy';
+ await A('...ciao.');
+ await A('CIAO! Ciao ciao ciao!');
+ ui.mood=null;await A('Tu sei {P}. Lo so. Me l\'hai detto tu, all\'inizio. Ricordi?');st('mente',-3);
+ if(P.plays>1){await A('Ed è la volta numero '+P.plays+' che ci incontriamo. Io me le ricordo tutte.');
+  const LE={dono:'L\'ultima volta mi hai dato un dito. Era buonissimo.',rifiuto:'L\'ultima volta mi hai detto di no. Me lo sono preso lo stesso.',ribelle:'L\'ultima volta hai preso il coltello. Non l\'ho dimenticato.',controllo:'L\'ultima volta la tua mano era mia. Un po\' lo è ancora.',hp:'L\'ultima volta ti ho mangiato tutto. Non te lo ricordi?',mente:'L\'ultima volta siamo diventati una cosa sola.'};
+  const le=P.endings[P.endings.length-1];if(LE[le]){ui.glitch=.4;await A(LE[le])}}
+ ui.mood='happy';
+ await N('Sul tuo polso c\'è una... cosa. Piccola. Rotonda. Con dei capelli viola.');
+ await N('È carina. È orribile. È tutte e due le cose.');
+ ui.mood=null;
+ await A('Ho fame. Tu hai fame? Io ho tantissima fame.');
+ const c4=await chooseG('pinzette',['Toglierlo con le pinzette','Dargli da mangiare']);
+ if(c4===0){S.flags.pinzette=1;
+  await N('Prendi le pinzette dal bagno.');
+  await A('Cosa fai? Cosa sono quelle?');
+  const s=await mgTiming({rounds:3,label:'PINZETTE',zone:.2,speed:1});
+  if(s>=2){await N('Lo afferri. Tiri.');ui.shake=7;SFX.crunch();await N('Il braccio intero si tende come un filo. È attaccato a qualcosa di MOLTO profondo.');st('hp',-20);ui.mood='angry';await A('AHIA! AHIA AHIA AHIA!');await A('...perché mi fai male?')}
+  else{await N('Le pinzette scivolano. Ti tagli la pelle.');st('hp',-10);ui.mood='happy';await A('Hihi. Che buffo che sei.')}
+  st('mente',-10);st('legame',-10);ui.mood=null;
+  await A('Non farlo più, va bene? Io voglio solo... mangiare.')}
+ else st('legame',5);
+ await N('In cucina trovi dei biscotti. Gliene porgi un pezzetto.');
+ const h=await mgFeed({need:3,time:10,food:'biscotti'});
+ if(h>=2){ui.mood='happy';await A('BUONO! Buonissimo!');await A('Sei gentile. Sei la persona più gentile del mondo.');st('legame',10);ui.mood=null}
+ else await A('...È caduto. Fa niente. Ci riproveremo. Abbiamo tanto tempo.');
+ await A('Io non ho un nome. Me ne dai uno?');
+ const c5=await chooseG('nome',['"Amico"','"Puntino"','"Cosa"']);
+ S.name=['AMICO','PUNTINO','COSA'][c5];S.hudFriend=true;S.flags.nome=c5;
+ if(c5===0){ui.mood='happy';await A('Amico... AMICO! Mi piace! Allora siamo amici!');st('legame',10)}
+ else if(c5===1){await A('Puntino. Perché ero piccolo piccolo. Ma crescerò, sai?');st('legame',5)}
+ else{await A('...Cosa.');await A('Va bene. Mi ricorderò che mi hai chiamato così.');st('legame',-5);st('mente',-5)}
+ ui.mood=null;
+ view('room',{time:'notte'});ui.music=false;
+ await N('Quella notte, al buio, una voce sottile.');
+ await A('Ehi. Ci sei?');
+ await A('Possiamo essere amici per davvero? Io non ho nessuno. Ho solo te.');
+ const c6=await chooseG('amici',['Sì','...']);
+ if(c6===0){st('legame',10);ui.mood='happy';await A('Evviva. Allora non mi lascerai mai.')}
+ else{await A('Il silenzio vuol dire sì. Lo so. Sento quello che pensi.');st('mente',-5)}
+ view('wrist');ui.mood=null;
+ await A('Promesso, {P}?');
+ SFX.sting();ui.glitch=.7;ui.shake=4;
+ await A('Non era una domanda.');
+ await fade(1);
+ S.fame=35;S.food.biscotti=1;S.soldi=Math.max(S.soldi,20);
+ inc('cap1');ui.hud=false;await card('FINE CAPITOLO 1',['IL PUNTINO','','LE TUE SCELTE SONO STATE RICORDATE.']);
+ S.day=4;saveCk();
+}
+async function work(tut){view('work');ui.music=false;
+ if(tut)await N('Al lavoro: tocca quando il cursore bianco è nella zona verde.');
+ const s=await mgTiming({rounds:3,label:'LAVORO',zone:tut?.28:.2,speed:tut?.8:1+(S.day-4)*.15});
+ st('soldi',8+s*8);
+ view('work');
+ if(s===3)await N('Giornata perfetta. Il capo ti fa un cenno.');else if(s===0)await N('Giornata disastrosa. Nessuno ti guarda in faccia.');else await N('Una giornata come le altre.')}
+
+/* ============ CAPITOLO 2 ============ */
+async function chapter2(resumed){
+ ui.hud=false;await card('CAPITOLO 2',['IL MIO AMICO',S.day>4?'GIORNO '+S.day:'']);
+ ui.hud=true;
+ const away=PREV_SEEN?Date.now()-PREV_SEEN:0;PREV_SEEN=0;
+ if(resumed&&S.hudFriend&&away>10*60000){await morning();view('wrist');
+  const h=Math.floor(away/3600000),m=Math.floor(away/60000)%60,dd=Math.floor(h/24);
+  const txt=dd>=1?dd+(dd>1?' giorni':' giorno'):h>=1?h+(h>1?' ore':' ora')+' e '+m+' minuti':m+' minuti';
+  ui.mood='angry';await A('Mi hai lasciato da solo per '+txt+', {P}.');ui.mood=null;
+  const tl=timeLine();await A(tl[0]);
+  const add=Math.min(40,Math.floor(away/3600000*8));
+  if(add>=5){await A('Mentre non c\'eri, ho avuto tanta fame.');st('fame',add)}else await A('Ma adesso sei qui. Tornano sempre tutti.')}
+ while(S.day<=7){saveCk();S.act=3;S.talked=false;S.mirror=false;S.met=false;
+  await dayStart();check();
+  await hub();check();
+  if(S.day===7){await finale();return}
+  await nightC2();check();S.day++}
+}
+async function dayStart(){const d=S.day;
+ if(d===5)S.stage=4;if(d===7)S.stage=5;
+ await morning();await N('Giorno '+d+'.');
+ if(d===4){view('wrist');ui.mood='happy';
+  await A('Buongiorno, {P}! Stanotte ho dormito un po\' dentro di te. Era caldissimo.');ui.mood=null;
+  await A('Oggi voglio qualcosa di DOLCE. Me lo prendi? Per favore per favore per favore.');
+  const tl=timeLine();await A(tl[0]);await A(tl[1]);
+  await A(isTouch?'Mi guardi da un telefono. Mi porti sempre in tasca... o sono io che porto te?':'Mi guardi da un computer. Uno schermo grande. Così ti vedo meglio anche io.');
+  S.demand='biscotti';
+  await N('Ogni giorno hai 3 azioni: LAVORA per i soldi, FAI LA SPESA, ACCAREZZA '+S.name+'.');
+  await N('NUTRI, PARLA e SPECCHIO non costano azioni. Se '+S.name+' ha troppa fame... mangerà qualcos\'altro.')}
+ if(d===5){view('wrist');
+  await N(S.name+' è cresciuto. Ora ha dei dentini.');
+  await N('Intorno, le vene sono diventate scure. Rosse e blu, come una mappa.');
+  await A('Il dolce non mi basta più.');
+  await A('Voglio CARNE. Cruda. Rossa. Piena di succo.');
+  S.demand='carne';
+  view('phone',{mode:'call',name:'Giulia'});SFX.ring();
+  await N('Il telefono squilla. È Giulia, tua sorella.');
+  const c=await chooseG('tel',['Rispondere','Ignorare']);
+  if(c===0){await G('Ehi! Sparisci per giorni e non scrivi? Tutto ok?');
+   const c2=await chooseG('verita',['Dirle la verità','Mentire']);
+   if(c2===0){S.flags.giulia=1;await T('Giulia... c\'è una cosa sul mio braccio. Una cosa viva.');await G('...Cosa? Che vuol dire "viva"?');await G('Ok. Domani passo da te. Non fare niente di stupido.');
+    view('wrist');ui.mood='angry';SFX.sting();await A('PERCHÉ LE HAI PARLATO DI ME?');await A('Lei non capisce. Lei vorrà separarci.');ui.mood=null;st('legame',-15);st('mente',-5)}
+   else{S.flags.bugia=1;await T('Tutto bene. Solo un po\' di stress al lavoro.');await G('Mh. Se lo dici tu. Ti voglio bene, eh.');
+    view('wrist');ui.mood='happy';await A('Bene così. Lei non capirebbe.');await A('E poi io ti voglio più bene di lei.');ui.mood=null;st('legame',5);st('mente',-5)}}
+  else{S.flags.ignora=1;view('wrist');await A('Chi era? ...Non importa.');await A('Adesso ci sono io.');st('mente',-5)}}
+ if(d===6){view('wrist');
+  await A('La carne era fredda. Era già morta.');
+  await A('Voglio qualcosa che si MUOVE. Qualcosa di vivo.');
+  await A('Al negozio hanno i pesciolini rossi. Li ho visti. Con i tuoi occhi.');
+  S.demand='pesce';
+  const bt=await battery();if(bt!=null){await A('La tua batteria è al '+bt+'%.');await A(bt<30?'Anche tu ti stai scaricando, {P}.':'Bene. Ne avremo bisogno, stanotte.')}
+  if(S.flags.giulia){view('room',{time:'giorno'});SFX.knock();
+   await N('Bussano alla porta. TOC. TOC. TOC.');
+   await G('Sono io. Apri. Fammi vedere quel braccio.');
+   const c=await chooseG('porta',['Mostrarle il polso','Mandarla via']);
+   if(c===0){S.flags.giuliaVide=1;view('wrist');await N('Tiri su la manica.');await G('Oddio. Oddio oddio oddio.');await G('Andiamo in ospedale. ADESSO.');
+    ui.mood='angry';await A('No.');ui.shake=7;SFX.crunch();
+    await N('Il tuo braccio si muove da solo. Spinge Giulia. Forte.');
+    await N('Lei cade a terra. Ti guarda come si guarda uno sconosciuto.');
+    await G('...Tu non sei più tu.');
+    await N('Se ne va. La porta sbatte.');ui.mood=null;st('mente',-20);st('legame',10)}
+   else{S.flags.giuliaAvvisa=1;await T('Sto bene. Vattene, per favore.');await G('...Va bene. Ma se domani non rispondi al telefono, chiamo qualcuno.');await N('I suoi passi si allontanano per le scale.');st('mente',-10);st('legame',10)}}}
+ if(d===7){view('room',{time:'giorno'});await N('Ti svegli. Non ricordi niente della notte.');
+  view('wrist');ui.heart=1;
+  await N(S.name+' ora è grande quanto un pugno.');
+  await N('Ha tre occhi. Non ricordi quando è spuntato il terzo.');
+  await A('...');
+  await N(S.name+' non parla. Ti guarda e basta.');ui.heart=0;
+  if(S.flags.giuliaAvvisa){view('phone',{mode:'msg',lines:['GIULIA:','','PERCHE\' NON','RISPONDI?','','STO VENENDO','DA TE.','NON SONO SOLA.']});await N('Un messaggio di Giulia. Poi il telefono si spegne da solo.');S.flags.giuliaArriva=1}
+  S.demand=null}
+}
+async function hub(){
+ while(true){
+  if(SESSION.back){SESSION.back=false;view('wrist');await A('Dove vai quando lo schermo si spegne, {P}?');await A('Io resto qui. Al buio. Ad aspettare.');st('mente',-3)}
+  if(new Date().getHours()===3&&!SESSION.h3){SESSION.h3=1;view('wrist');ui.glitch=.6;SFX.sting();await A('Sono le '+hhmm()+'. L\'ora in cui dormono tutti.');await A('Tranne noi due.');st('mente',-5)}
+  const b=NET.broadcast;if(b&&b.text&&String(b.id)!==P.seenB){P.seenB=String(b.id);saveProfile();view('wrist');ui.glitch=.3;await A(String(b.text).slice(0,250))}
+  view('room',{time:S.act>=3?'giorno':S.act>=1?'sera':'notte'});
+  if(S.act<=0){await N('Sei a pezzi. È ora di dormire.');return}
+  const dm=S.demand&&!S.met?' '+S.name+' VUOLE: '+FOOD[S.demand].n+'.':'';
+  promptBox('Azioni rimaste: '+S.act+'.'+dm+' Cosa fai?');
+  const c=await choose(['LAVORA (1)','FAI LA SPESA (1)','NUTRI '+S.name,'ACCAREZZA (1)','PARLA'+(S.talked?' (FATTO)':''),'SPECCHIO'+(S.mirror?' (FATTO)':''),'DORMI'],2);
+  if(c===0){S.act--;await work2()}
+  else if(c===1){S.act--;await shop()}
+  else if(c===2)await feed();
+  else if(c===3){S.act--;await pet()}
+  else if(c===4){if(S.talked)await N(S.name+' non ha voglia di parlare, adesso.');else{S.talked=true;await talk()}}
+  else if(c===5){if(S.mirror)await N('Meglio non guardarsi di nuovo. Non oggi.');else{S.mirror=true;await mirror()}}
+  else return;
+  check()}
+}
+async function work2(){await work(false);st('fame',15);
+ if(S.day>=6){await A('Torna a casa. Mi annoio. Torna a casa. Torna a casa.');st('mente',-5)}
+ if(S.fame>=80){await N('Il polso ti fa male per tutto il giorno.');st('hp',-5)}}
+async function shop(){view('shop');ui.dialog=null;await N('Il supermercato sotto casa. Luci al neon. Musichetta allegra.');
+ while(true){const items=['biscotti','latte','carne'];if(S.day>=6)items.push('pesce');
+  promptBox('Hai €'+S.soldi+'. Cosa compri?');
+  const c=await choose([...items.map(k=>FOOD[k].n+' €'+FOOD[k].p),'ESCI']);
+  if(c===items.length)break;const k=items[c];
+  if(S.soldi<FOOD[k].p){await N('Non hai abbastanza soldi.');continue}
+  st('soldi',-FOOD[k].p);S.food[k]++;SFX.ok();
+  if(k==='pesce'&&!S.flags.pesceTxt){S.flags.pesceTxt=1;await N('Il pesciolino nuota in cerchio nel sacchetto. Ti guarda.')}}}
+const MET={4:'DOLCE! Sei il migliore. Il migliore migliore migliore.',5:'Mmmh. Sapeva di ferro. Sapeva un po\' di... te.',6:'Si muoveva! Mi è piaciuto tanto quando ha smesso.'};
+async function feed(){const have=Object.keys(FOOD).filter(k=>S.food[k]>0);
+ if(!have.length){await N('Non hai niente da dargli. Prima fai la spesa.');return}
+ view('wrist');promptBox('Cosa gli dai?');
+ const c=await choose([...have.map(k=>FOOD[k].n+' X'+S.food[k]),'INDIETRO']);
+ if(c===have.length)return;const k=have[c];S.food[k]--;
+ if(k==='pesce')await N('Tieni il pesciolino tra le dita. Si dibatte.');
+ const h=await mgFeed({need:3,time:9,food:k});
+ if(h<2){await N('Il cibo cade a terra.');ui.mood='angry';await A('Che spreco. Che. Spreco.');ui.mood=null;st('legame',-3);return}
+ st('fame',-FOOD[k].f);
+ if(k==='pesce'){SFX.crunch();await N('Il pesciolino smette di muoversi a metà.');st('mente',-10)}
+ if(S.demand===k&&!S.met){S.met=true;ui.mood='happy';await A(MET[S.day]);st('legame',12);ui.mood=null}
+ else if(S.demand&&S.demand!==k&&S.day>=5){await A('Questo? Non è quello che ti ho chiesto.');st('legame',-4)}
+ else{ui.mood='happy';await A('Gnam gnam.');ui.mood=null}}
+async function pet(){view('wrist');
+ const r=await mgRub({time:7,need:320,danger:S.day>=5?1:0});
+ if(r.ok){if(S.day<=4){ui.mood='happy';await A('Hihi! Fa il solletico!');st('legame',8);st('mente',5)}
+  else{await N('È caldo. Troppo caldo. E ti piace.');await N('Non dovrebbe piacerti.');st('legame',8);st('mente',-3)}ui.mood=null}
+ else{await A('Già finito? Ancora un pochino...');st('legame',2)}
+ if(r.bites)await N('Ti ha morso '+r.bites+(r.bites>1?' volte':' volta')+'. Dice che era un gioco.')}
+const TALK={4:['Da dove vieni?','Da su. Molto su. Faceva tanto freddo.','Poi sono caduto. E ho trovato te. Tu sei caldo.'],
+ 5:['Ce ne sono altri come te?','Tanti. Dormono. Aspettano.','Aspettano qualcuno gentile come te. Tu sei gentile, vero?'],
+ 6:['Cosa vuoi da me?','Voglio stare con te. Dentro di te. Per sempre.','È una cosa bella, sai? Le persone la chiamano amore.'],
+ 7:['C\'era qualcuno prima di me?','Sì. Si chiamava Marco. Era buono.','Era buonissimo.']};
+async function talk(){view('wrist');const t=[...TALK[S.day]];
+ if(S.day===5&&NET.ok&&NET.online>1)t[1]='Tanti. Proprio adesso ce ne sono '+(NET.online-1)+' svegli, insieme al loro ospite. Li sento.';
+ if(S.day===7){if(P.plays>1&&Math.random()<.5){t[1]='Sì. Eri tu, {P}. L\'altra volta.';t[2]='Non ti ricordi? Io sì.'}else t[1]='Sì. Si chiamava '+prevHost()+'. Era buono.'}await T(t[0]);if(S.day>=6)ui.heart=1;await A(t[1]);await A(t[2]);ui.heart=0;st('legame',3);if(S.day>=6)st('mente',-4)}
+async function mirror(){const w=S.day-4;view('mirror',{w});
+ if(w===0){await N('Ti guardi allo specchio. Occhiaie. Pelle grigia.');await N('Hai un aspetto orribile.');st('mente',-2)}
+ if(w===1){await N('Il tuo riflesso sbatte le palpebre un attimo dopo di te.');await N('Riprovi. Ora è perfetto. Troppo perfetto.');st('mente',-5)}
+ if(w===2){await N('Il riflesso sorride.');ui.glitch=.4;SFX.sting();await N('Tu no.');st('mente',-8)}
+ if(w>=3){await N('Sulla spalla del riflesso c\'è '+S.name+'. Enorme.');await N('Ti saluta. Con una mano. Non gli hai mai visto delle mani.');st('mente',-10)}
+ if(w===1||w>=3){const nt=randNote();if(nt){await N('Sul vetro appannato qualcuno ha scritto con il dito:');await N('"'+nt.t+'"   - '+nt.n);ui.glitch=.3;await A('Non leggere quella roba, {P}. Sono bugie.')}}}
+async function nightC2(){view('room',{time:'notte'});ui.music=false;
+ promptBox('Notte.');await sleep(700);
+ st('fame',30);S.veins++;let attacked=false;
+ if(S.demand&&!S.met){view('wrist');ui.mood='angry';await A('Me lo avevi promesso. Non mi hai portato niente.');st('legame',-10);ui.mood=null}
+ if(S.fame>=100||(S.demand&&!S.met&&S.day>=5)){attacked=true;view('black');
+  await N('Nel sonno senti qualcosa muoversi. Su per il braccio. Verso la spalla.');
+  SFX.crunch();ui.shake=7;await N('Al mattino, il lenzuolo è macchiato di rosso.');
+  st('hp',-25);S.veins++;S.fame=Math.max(40,S.fame-50)}
+ else if(S.legame>=50){view('wrist');ui.mood='happy';await A('Buonanotte. Ti voglio bene.');ui.mood=null;st('mente',6)}
+ else{await N('Dormi male. Ma dormi.');st('mente',3)}
+ await fade(1);ui.dialog=null}
+async function finale(){
+ view('room',{time:'notte'});ui.music=false;await fade(0);
+ await N('Notte. Il settimo giorno finisce.');
+ if(S.flags.giuliaArriva)await N('Fuori, in strada, una macchina si ferma. Poi riparte. Nessuno sale le scale.');
+ view('wrist');ui.heart=1;
+ await A('Ho fame.');
+ await A('Ho sempre fame. Lo sai, vero?');
+ await A('Il dolce era poco. La carne era fredda. Il pesce era piccolo.');
+ await A('Tu invece sei caldo. E sei tanto.');
+ SFX.sting();ui.glitch=.4;
+ await A('Dammi un dito, {P}. Solo uno.');
+ await A('Ne hai dieci. Non te ne accorgerai nemmeno.');
+ const c=await chooseG('dito',['Darglielo','Rifiutare','Prendere il coltello']);
+ if(c===0){S.flags.finale='dono';await T('...Va bene.');ui.mood='happy';await A('Lo sapevo. Sei il mio migliore amico.');ui.mood=null;
+  view('black');ui.heart=0;SFX.crunch();ui.shake=9;ui.flash=.8;await N('CRUNCH.');S.fingers=4;view('wrist');
+  await N('Non fa male quanto pensavi.');await N('Anzi. Non fa male per niente.');await N('Ed è proprio questo che ti spaventa.');
+  st('hp',-10);st('mente',-20);st('legame',30)}
+ else if(c===1){S.flags.finale='rifiuto';await T('No. Basta.');await A('...');await A('Va bene.');await A('Va bene va bene va bene va bene.');
+  view('black');ui.heart=0;await N('Ti addormenti senza accorgertene.');await N('Alle 3:33 ti svegli. La mano sinistra è bagnata.');
+  SFX.crunch();ui.flash=.8;S.fingers=4;view('wrist');ui.mood='happy';
+  await A('Me lo sono preso da solo. Non arrabbiarti.');await A('L\'ho fatto per te. Tu non volevi scegliere, vero?');ui.mood=null;
+  st('hp',-15);st('mente',-25);st('legame',-10)}
+ else{await N('Il coltello della cucina è freddo. La tua mano trema.');ui.mood='angry';await A('Cosa vuoi fare con quello?');
+  const s=await mgTiming({rounds:5,label:'COLTELLO',zone:.16,speed:1.3});
+  if(s>=4){S.flags.finale='ribelle';SFX.crunch();ui.shake=9;ui.flash=.8;
+   await N('Affondi la lama alla base di '+S.name+'. Urla. Urli anche tu.');
+   await N('Poi il taglio si richiude da solo. In un attimo.');await N('Come se la tua carne fosse sua.');
+   await A('NON. FARLO. MAI. PIÙ.');ui.mood=null;await A('...Ti perdono. Perché siamo amici.');
+   st('hp',-25);st('legame',-30)}
+  else{S.flags.finale='controllo';await N('La lama si ferma a un centimetro dalla pelle.');await N('Non l\'hai fermata tu.');
+   await A('Questa mano ormai è anche mia.');await A('E allora... me lo prendo.');
+   view('black');SFX.crunch();ui.shake=9;ui.flash=.8;S.fingers=4;await N('CRUNCH.');view('wrist');
+   st('hp',-20);st('mente',-25)}
+  ui.mood=null}
+ ui.heart=0;P.endings.push(S.flags.finale);inc('fine_'+S.flags.finale);saveProfile(true);check();
+ view('black');await N('Quella notte sogni un cielo che cade.');await N('E migliaia di puntini neri. Sui polsi di migliaia di persone.');
+ ui.glitch=.5;await N('Ti stanno guardando tutti.');
+ await fade(1);ui.hud=false;
+ await card('FINE CAPITOLO 2',['IL MIO AMICO']);
+ const FN={dono:'IL DONO',rifiuto:'IL FURTO',ribelle:'LA LAMA',controllo:'LA MANO'};
+ const fk=['dono','rifiuto','ribelle','controllo'];const ftot=fk.reduce((a,k)=>a+(NET.stats['fine_'+k]||0),0);
+ const fpc=NET.ok&&ftot?Math.round((NET.stats['fine_'+S.flags.finale]||0)/ftot*100)+'% DEGLI OSPITI HA AVUTO QUESTO FINALE':'';
+ const gl=S.flags.giuliaVide?'HA VISTO TUTTO':S.flags.giuliaArriva?'STA ARRIVANDO':S.flags.giuliaAvvisa?'PREOCCUPATA':S.flags.giulia?'SA QUALCOSA':'NON SA NIENTE';
+ await card('RIEPILOGO',['FINALE: '+FN[S.flags.finale],'NOME: '+S.name,'LEGAME: '+S.legame+'   MENTE: '+S.mente+'   SALUTE: '+S.hp,'DITA (MANO SINISTRA): '+(S.fingers===5?'5':'4'),'GIULIA: '+gl,'',fpc,'IL CAPITOLO 3 RICORDERA\' TUTTO.','CAPITOLO 3 - PROSSIMAMENTE']);
+ if(NET.ok){view('card',{title:'UN ULTIMO FAVORE',sub:['QUALCUN ALTRO SI STA SVEGLIANDO','CON UN PUNTINO SUL POLSO.']});await fade(0);
+  promptBox('Vuoi lasciare un messaggio sullo specchio per il prossimo ospite?');
+  const c=await choose(['SCRIVI UN MESSAGGIO','NO'],1,'center');
+  if(c===0){const t=clean(await askText('MESSAGGIO (MAX 40 LETTERE)',40),40);
+   if(t){NET.d.set(NET.R('notes/'+P.pid),{name:P.name,text:t,at:NET.d.serverTimestamp(),fine:S.flags.finale}).catch(()=>{});await N('Il vapore si posa sul vetro. Qualcuno lo leggerà.')}}
+  await fade(1)}
+ try{localStorage.setItem(KEYEND,JSON.stringify(S))}catch(e){}
+ clearCk()}
+async function gameOver(k){P.deaths++;P.endings.push(k);inc('morti_'+k);saveProfile(true);
+ if(NET.ok&&k==='hp')NET.d.set(NET.R('fallen/'+P.pid),{name:P.name,at:NET.d.serverTimestamp(),day:S.day}).catch(()=>{});
+ ui.hud=false;ui.music=false;ui.heart=0;view('black');await fade(0);SFX.sting();
+ if(k==='hp'){await N('Il tuo corpo è diventato troppo piccolo per due.');await A('Grazie per il pasto, {P}. Sapevi di casa.')}
+ else{await N('Non sai più dove finisci tu e dove comincia '+S.name+'.');await A('Shh. Adesso siamo una cosa sola.')}
+ ui.dialog=null;view('card',{title:'FINE',sub:[k==='hp'?'FINALE: IL PASTO':'FINALE: UNA COSA SOLA']});
+ const ck=getCk();const c=await choose(ck?['RIPROVA DAL GIORNO '+ck.day,'TORNA AL TITOLO']:['TORNA AL TITOLO'],1,'center');
+ await fade(1);return ck&&c===0?'retry':'title'}
+
+/* ============ MAIN ============ */
+async function titleScreen(){S=null;ui.hud=false;ui.dialog=null;view('title');ui.music=true;await fade(0);
+ while(true){const ck=getCk();const opts=['NUOVA PARTITA'],ids=['new'];if(ck){opts.push('CONTINUA (GIORNO '+ck.day+')');ids.push('ck')}
+  if(NET.ok){opts.push('CARICA DA CODICE');ids.push('code')}
+  if(P.name)promptBox('Ciao '+P.name+'. Il tuo codice ospite: '+P.pid+' (serve per continuare da un altro dispositivo).');else ui.dialog=null;
+  const id=ids[await choose(opts,1,'center')];
+  if(id==='code'){ui.dialog=null;const code=(await askText('CODICE OSPITE',22,true)).trim().toLowerCase();const r=await loadCode(code);
+   promptBox(r==='ok'?'Ti ho ritrovato, '+P.name+'.':r==='none'?'Nessun ospite con questo codice.':'Connessione assente. Riprova.');await sleep(1600);continue}
+  await fade(1);return id}}
+async function askName(){view('title');await fade(0);
+ if(P.name){promptBox('Di nuovo tu, '+P.name+'?');if(await choose(['SÌ, SONO IO','CAMBIA NOME'],1,'center')===0){ui.dialog=null;return}}
+ while(true){ui.dialog=null;const n=clean(await askText('COME TI CHIAMI?',12),12,true);if(n.length>=2){P.name=n;saveProfile(true);break}
+  promptBox('Scrivi un nome vero. Almeno 2 lettere.');await sleep(1300)}
+ promptBox('Piacere, '+P.name+'. Me lo ricorderò.');await sleep(1600);ui.glitch=.3;await sleep(300);ui.dialog=null}
+async function main(){
+ view('start');ui.fade=0;ui.fadeTo=0;await tap();await fade(1);
+ while(true){let mode=await titleScreen();
+  while(true){try{if(mode==='new'){await askName();P.plays++;inc('partite');if(P.plays===1)inc('ospiti');saveProfile(true);await fade(1);S=newState();await chapter1()}else S=getCk();await chapter2(mode==='ck');break}
+   catch(e){if(!(e instanceof Over)){console.error(e);break}const r=await gameOver(e.k);if(r!=='retry')break;mode='ck'}}}}
+netInit();
+main();
+</script>
+</body>
+</html>
