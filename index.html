@@ -99,7 +99,7 @@ const SFX={
  ring(){for(let i=0;i<3;i++)setTimeout(()=>{tone(880,.14,'square',.035);setTimeout(()=>tone(660,.14,'square',.035),160)},i*650)},
  knock(){for(let i=0;i<3;i++)setTimeout(()=>{noise(.07,.5,350);tone(80,.08,'sine',.2)},i*260)}
 };
-function blip(w){if(w==='a'){if(S&&S.stage>=4)tone(130+Math.random()*60,.05,'sawtooth',.035);else tone(900+Math.random()*250,.035,'square',.022)}else if(w==='g')tone(620,.03,'triangle',.045);else if(w==='tu')tone(380,.03,'triangle',.045);else tone(500,.025,'square',.016)}
+function blip(w){if(w==='a'){if(S&&S.stage>=4)tone(130+Math.random()*60,.05,'sawtooth',.035);else tone(900+Math.random()*250,.035,'square',.022)}else if(w==='g')tone(620,.03,'triangle',.045);else if(w==='f')tone(300,.03,'triangle',.045);else if(w==='tu')tone(380,.03,'triangle',.045);else tone(500,.025,'square',.016)}
 
 /* ============ PROFILO GIOCATORE (si ricorda di te) ============ */
 const PKEY='ilmioamico_profile';
@@ -156,7 +156,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden){hiddenAt=D
 /* ============ STATE ============ */
 let S=null;
 function newState(){return{day:1,hp:100,mente:100,legame:0,fame:0,soldi:0,food:{biscotti:0,latte:0,carne:0,pesce:0},name:'???',stage:0,veins:0,fingers:5,flags:{},demand:null,met:false,act:3,talked:false,mirror:false,hudFriend:false}}
-const FOOD={biscotti:{n:'BISCOTTI',p:5,f:25},latte:{n:'LATTE',p:4,f:20},carne:{n:'CARNE CRUDA',p:12,f:45},pesce:{n:'PESCIOLINO ROSSO',p:15,f:70}};
+const FOOD={biscotti:{n:'BISCOTTI',p:5,f:25},latte:{n:'LATTE',p:4,f:20},carne:{n:'CARNE CRUDA',p:12,f:45},pesce:{n:'PESCIOLINO ROSSO',p:15,f:70},sangue:{n:'IL TUO SANGUE',p:0,f:60}};
 const LBL={hp:['SALUTE','#ff6a7a'],mente:['MENTE','#d09cff'],legame:['LEGAME','#ffa6dc'],fame:['FAME','#ffb347'],soldi:['€','#ffe066']};
 function corr(){if(!S)return 0;return clamp((S.stage-2)/3*.65+(100-S.mente)/100*.45,0,1)}
 function theme(){return mix('#3d8fe6','#9a1f2c',corr())}
@@ -172,7 +172,7 @@ const ui={view:'start',vp:{},dialog:null,choices:null,mg:null,toasts:[],fade:1,f
 function view(v,p={}){ui.view=v;ui.vp=p}
 function say(t,who=''){return new Promise(res=>{const tx=norm(String(t).replace(/\{P\}/g,P.name||'TU'));ui.dialog={text:tx,lines:wrap(tx,59),who,n:0,res}})}
 function promptBox(t){const tx=norm(t);ui.dialog={text:tx,lines:wrap(tx,59),who:'',n:tx.length,res:null}}
-const N=t=>say(t),T=t=>say(t,'tu'),A=t=>say(t,'a'),G=t=>say(t,'g');
+const N=t=>say(t),T=t=>say(t,'tu'),A=t=>say(t,'a'),G=t=>say(t,'g'),F=t=>say(t,'f');
 let inputOpen=false;
 function askText(q,max,low){return new Promise(res=>{const box=document.getElementById('inp'),t=document.getElementById('inpt'),ok=document.getElementById('inpok');
  document.getElementById('inpq').textContent=q;t.value='';t.maxLength=max;t.className=low?'low':'';box.style.display='flex';inputOpen=true;setTimeout(()=>t.focus(),60);
@@ -203,7 +203,7 @@ function press(x,y,kb){
  if(ui.tapRes){const r=ui.tapRes;ui.tapRes=null;SFX.sel();r();return}
  const d=ui.dialog;if(d&&d.res){if(d.n<d.text.length)d.n=d.text.length;else{const r=d.res;d.res=null;r()}}
 }
-cv.addEventListener('pointerdown',e=>{e.preventDefault();if(inputOpen)return;audio();pdown=true;const[x,y]=pos(e);ui.px=x;ui.py=y;press(x,y)});
+cv.addEventListener('pointerdown',e=>{e.preventDefault();if(inputOpen)return;audio();if(!fsTried){fsTried=true;goFS()}pdown=true;const[x,y]=pos(e);ui.px=x;ui.py=y;press(x,y)});
 addEventListener('pointermove',e=>{const[x,y]=pos(e);ui.px=x;ui.py=y;if(ui.choices)ui.hover=hitChoice(x,y);if(ui.mg&&ui.mg.move)ui.mg.move(x,y,pdown)});
 addEventListener('pointerup',()=>{pdown=false;if(ui.mg&&ui.mg.up)ui.mg.up()});
 addEventListener('pointercancel',()=>{pdown=false;if(ui.mg&&ui.mg.up)ui.mg.up()});
@@ -215,29 +215,20 @@ addEventListener('keydown',e=>{if(inputOpen)return;audio();const k=e.key;
   if(k==='ArrowDown'||k==='ArrowRight'){ui.hover=(ui.hover+1)%L;SFX.sel();return}
   if(k==='ArrowUp'||k==='ArrowLeft'){ui.hover=(ui.hover-1+L)%L;SFX.sel();return}
   if((k==='Enter'||k===' ')&&ui.hover>=0){pick(ui.hover);return}return}
- if(k===' '||k==='Enter'){e.preventDefault();press(-1,-1,true)}});
-/* schermo intero automatico al primo tocco/click ovunque (sui telefoni pointerdown non vale come gesto utente: si riprova su pointerup/touchend/click finché non riesce) */
-function isFS(){return !!(document.fullscreenElement||document.webkitFullscreenElement)}
-function autoFS(e){if(fsTried||isFS())return;
- if(e.target&&e.target.id==='fs')return; // il pulsante [ ] gestisce da sé
- if(e.type==='keydown'&&(e.key==='f'||e.key==='F'))return; // il tasto F fa già il toggle
- goFS()}
-['pointerdown','pointerup','touchend','click','keydown'].forEach(t=>document.addEventListener(t,autoFS,{capture:true,passive:true}));
-document.addEventListener('fullscreenchange',()=>{if(isFS())fsTried=true});
-document.addEventListener('webkitfullscreenchange',()=>{if(isFS())fsTried=true});
+ if(k===' '||k==='Enter'){e.preventDefault();if(!fsTried){fsTried=true;goFS()}press(-1,-1,true)}});
 function goFS(toggle){const d=document,el=d.documentElement;
  if(toggle&&(d.fullscreenElement||d.webkitFullscreenElement)){try{(d.exitFullscreen||d.webkitExitFullscreen).call(d)}catch(e){}return}
  const rq=el.requestFullscreen||el.webkitRequestFullscreen;
  try{const p=rq&&rq.call(el,{navigationUI:'hide'});if(p&&p.then)p.then(lockO).catch(()=>{})}catch(e){}lockO()}
 function lockO(){try{if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(()=>{})}catch(e){}}
-document.getElementById('fs').addEventListener('click',()=>{audio();fsTried=true;goFS(true)});
+document.getElementById('fs').addEventListener('click',()=>{audio();goFS(true)});
 document.addEventListener('fullscreenchange',()=>{document.getElementById('fs').style.display=document.fullscreenElement?'none':'block'});
 
 /* ============ CREATURE / ARM ============ */
 const CX=210,CY=102;
 const VEINS=[];(function(){let s=7;const rnd=()=>((s=s*16807%2147483647)/2147483647);for(let i=0;i<30;i++){let x=CX+(rnd()-.5)*8,y=CY+(rnd()-.5)*6,a=rnd()*Math.PI*2;const pts=[[x,y]];const L=12+rnd()*26;for(let j=0;j<L;j++){a+=(rnd()-.5)*.9;x+=Math.cos(a)*3.2;y+=Math.sin(a)*2;pts.push([x,y])}VEINS.push({pts,c:i%3===0?'#2a48c8':'#c8202e'})}})();
 function blink(t){return(t%4.2)<.14?.08:1}
-function crR(st){return[0,0,0,10,15,21][st]||0}
+function crR(st){return[0,0,0,10,15,21,27][st]||0}
 function crGeom(){const r=crR(S.stage);const by=CY-r*.7+Math.sin(ui.t*2)*.6;return{x:CX,by,r,my:by+r*.42}}
 function armPath(){ctx.beginPath();ctx.moveTo(108,86);ctx.lineTo(W+4,72);ctx.lineTo(W+4,168);ctx.lineTo(108,156);ctx.closePath()}
 function drawArm(){const c=corr();const skin=mix('#f3d8c6','#d9b0a8',c),sh=mix('#dcb39a','#a87a78',c),ol='#1a1010';
@@ -317,7 +308,9 @@ function drawWrist(){const c=corr();R(0,0,W,H,mix('#eef2f5','#3a1a22',c*.8));
  R(0,0,W,6,'rgba(0,0,0,.08)');
  drawArm();
  let mouth=0;const d=ui.dialog;if(ui.mouth!=null)mouth=ui.mouth;else if(d&&d.who==='a'&&d.n<d.text.length)mouth=Math.abs(Math.sin(ui.t*18));
+ if(S.stage>=6){ctx.lineWidth=3;for(let i=0;i<5;i++){ctx.strokeStyle=i%2?'#7a2aa0':'#5a1f6a';ctx.beginPath();let x=CX+8,y=CY-4+i*9;ctx.moveTo(x,y);for(let j=0;j<10;j++){x+=18;y+=Math.sin(ui.t*1.5+i+j)*3-1.2;ctx.lineTo(x,y)}ctx.stroke()}}
  drawCreature(CX,CY,S.stage,ui.t,{mood:ui.mood,mouth});
+ if(ui.vp.straps){for(const x of[150,300]){R(x,70,14,104,'#5a3a22');R(x,70,14,2,'#8a6a4a');R(x+4,116,6,8,'#c0c0c0')}}
 }
 function drawMirror(p){const w=p.w||0,c=corr();R(0,0,W,H,mix('#dfeef2','#2a1a1e',c*.7));
  for(let x=0;x<W;x+=16)R(x,0,1,H,'rgba(0,0,0,.08)');for(let y=0;y<H;y+=16)R(0,y,W,1,'rgba(0,0,0,.08)');
@@ -370,7 +363,7 @@ function drawTitle(){const gl=(ui.t%7)>6.82;
  textC(gl?'NON ERA UNA DOMANDA.':'UN GIOCO CARINO. PROMESSO.',W/2,48,gl?'#ff6060':'#c0306a');
  ctx.save();ctx.translate(192,118+Math.sin(ui.t*3)*3);ctx.scale(2,2);
  const ss=S;S=S||newState();drawCreature(0,0,gl?5:3,ui.t,{mood:gl?'angry':'happy',noroots:true});S=ss;ctx.restore();
- const info=NET.ok?'OSPITI SVEGLI ORA: '+NET.online+'   OSPITI TOTALI: '+(NET.stats.ospiti||0):'OFFLINE';text(info,6,206,gl?'#ff6060':'#c0306a');
+ const fin=ENDKEYS.filter(k=>P.endings.includes(k)).length;const info=(NET.ok?'SVEGLI ORA: '+NET.online+'  OSPITI: '+(NET.stats.ospiti||0):'OFFLINE')+'  FINALI: '+fin+'/'+ENDKEYS.length;text(info,6,206,gl?'#ff6060':'#c0306a');
  text(hhmm(),W-34,206,gl?'#ff6060':'#c0306a');
 }
 function drawStart(){R(0,0,W,H,'#000000');textO('IL MIO AMICO',W/2,52,'#ffffff',3,'#5a1030');
@@ -378,7 +371,36 @@ function drawStart(){R(0,0,W,H,'#000000');textO('IL MIO AMICO',W/2,52,'#ffffff',
  textC('SI GIOCA IN ORIZZONTALE, A SCHERMO INTERO',W/2,134,'#8888aa');
  textC('PC: CLIC / SPAZIO / TASTI 1-9   M AUDIO   F SCHERMO',W/2,176,'#555566');
  textC('CONTIENE TEMI HORROR E SANGUE. PEGI 16.',W/2,190,'#555566')}
-const VIEWS={room:drawRoom,wrist:drawWrist,mirror:drawMirror,work:drawWork,shop:drawShop,phone:drawPhone,black:drawBlack,card:drawCard,title:drawTitle,start:drawStart};
+function drawHospital(p){const c=corr();R(0,0,W,H,mix('#dfe9e4','#2a1a1e',c*.5));
+ R(0,150,W,66,mix('#b8c4bf','#20141a',c*.5));R(0,150,W,2,'rgba(0,0,0,.2)');
+ R(30,30,90,70,'#0b1430');for(let y=32;y<98;y+=5)R(30,y,90,3,'rgba(220,230,240,.85)');
+ R(130,110,190,14,'#ffffff');R(130,124,190,30,'#cfd8dc');R(126,96,8,64,'#8a979c');R(316,104,8,56,'#8a979c');R(136,102,40,10,'#ffffff');
+ R(100,30,2,124,'#8a979c');R(92,30,18,2,'#8a979c');R(94,34,12,18,'#d0e8ff');R(100,52,1,60,'#cfd8dc');
+ if(p.chair){R(40,130,30,6,'#6a7a80');R(40,110,6,26,'#6a7a80');R(44,104,16,22,'#3a2a30');ell(52,98,7,7,'#3a2a30')}
+ R(330,40,48,36,'#101418');ctx.strokeStyle=p.alarm?'#ff3040':'#40ff70';ctx.lineWidth=1;ctx.beginPath();
+ for(let i=0;i<44;i++){const ph=(i+ui.t*20)%22;const y=58-(ph>10&&ph<11.5?14:ph>=11.5&&ph<13?-6:0);i?ctx.lineTo(332+i,y):ctx.moveTo(332,y)}ctx.stroke();
+ if(p.alarm&&Math.floor(ui.t*3)%2)R(0,0,W,H,'rgba(255,0,30,.12)');
+ if(p.dark)R(0,0,W,H,'rgba(0,0,20,.45)');tendrils(c-.4)}
+function drawStreet(p){const t=ui.t;R(0,0,W,H,'#0a0d22');R(0,0,W,60,'#070918');
+ for(let i=0;i<40;i++)R((i*97)%W,(i*41)%120,1,1,'#8890b0');
+ for(let i=0;i<26;i++){const x=(i*61+Math.sin(i)*30+W)%W,y=((t*(8+i%4*4))+i*29)%170;R(x,y,2,2,i%3?'#1a0006':'#600010');R(x,y-4,1,4,'#3a0010')}
+ for(let i=0;i<8;i++){const bx=i*50-6,bh=50+((i*37)%50);R(bx,170-bh,46,bh,'#10121e');for(let wy=170-bh+6;wy<164;wy+=10)for(let wx=bx+5;wx<bx+40;wx+=10)if(((wx*7+wy*13)%5)===0)R(wx,wy,5,5,'#e8c060')}
+ R(0,168,W,48,'#151520');R(0,168,W,1,'#2a2a3a');
+ R(310,90,3,80,'#2a2a30');R(300,88,20,3,'#2a2a30');ctx.globalAlpha=.12;ctx.fillStyle='#ffe0a0';ctx.beginPath();ctx.moveTo(304,92);ctx.lineTo(270,170);ctx.lineTo(350,170);ctx.lineTo(316,92);ctx.fill();ctx.globalAlpha=1;
+ for(let i=0;i<(p.people||0);i++){const x=((t*9+i*73)%(W+60))-30,y=150+(i%2)*6;R(x-3,y-26,7,7,'#05050a');R(x-4,y-19,9,16,'#05050a');R(x-3,y-3,3,6,'#05050a');R(x+1,y-3,3,6,'#05050a');R(x+3,y-15,2,2,'#c040e0')}}
+function drawNest(p){const t=ui.t;R(0,0,W,H,'#1e0306');
+ for(let i=0;i<24;i++){const x=(i*53)%W,y=(i*31)%H;ell(x,y,20+Math.sin(t*1.5+i)*3,14+Math.cos(t*1.3+i)*2,i%2?'#3a060c':'#2a0408')}
+ ctx.lineWidth=1;for(let i=0;i<14;i++){ctx.strokeStyle=i%2?'#7a1020':'#4a0a40';ctx.beginPath();let x=i<7?0:W,y=(i*29)%H;ctx.moveTo(x,y);for(let j=0;j<12;j++){x+=(i<7?1:-1)*12;y+=Math.sin(t+i+j)*5;ctx.lineTo(x,y)}ctx.stroke()}
+ ell(192,34,92,28,'#000000','#5a0a14',3);for(let i=0;i<20;i++)R(120+(i*37)%150,16+(i*13)%34,1,1,'#aab');
+ const e=p.eye||0;if(e>0){const bl=(t%5)<.12?.1:1;ell(192,34,72*e+4,17*e*bl,'#f0e2d0');if(bl>.5){ell(192,34,15*e,15*e,'#a01020');ell(192,34,6*e,11*e,'#000');R(186,28,2,2,'#fff')}}
+ const names=p.names||[],n=9;
+ for(let i=0;i<n;i++){const a=Math.PI*(.08+.84*i/(n-1));const x=192-Math.cos(a)*160,y=128+Math.sin(a)*8;
+  R(x-4,y-28,8,8,'#050003');R(x-5,y-20,10,22,'#050003');const gy=y-38-Math.sin(t*2+i)*2;ell(x,gy,4,4,'#d98d4a');R(x-2,gy-1,1,1,'#000');R(x+1,gy-1,1,1,'#000');
+  ctx.strokeStyle='#a447d0';ctx.beginPath();ctx.moveTo(x-3,gy-2);ctx.lineTo(x-5,gy+5);ctx.moveTo(x+3,gy-2);ctx.lineTo(x+5,gy+5);ctx.stroke();
+  if(names[i])textC(names[i],x,y+4,'#ff9ec0')}
+ if(p.you){ctx.save();ctx.translate(192,132);ctx.scale(.9,.9);drawCreature(0,0,6,t,{mood:ui.mood,noroots:true});ctx.restore()}
+ R(0,0,W,H,'rgba(80,0,10,'+(.1+Math.sin(t*2)*.05).toFixed(2)+')')}
+const VIEWS={hospital:drawHospital,street:drawStreet,nest:drawNest,room:drawRoom,wrist:drawWrist,mirror:drawMirror,work:drawWork,shop:drawShop,phone:drawPhone,black:drawBlack,card:drawCard,title:drawTitle,start:drawStart};
 
 /* ============ HUD / DIALOG ============ */
 function panel(x,y,w,h,col){x=Math.round(x);y=Math.round(y);R(x,y,w,h,col);R(x,y,w,1,'rgba(255,255,255,.35)');R(x,y+h-1,w,1,'rgba(0,0,0,.25)');const b=mix(col,'#0a1a3a',.55);R(x+w-7,y-2,9,2,b);R(x+w,y-2,2,7,b);R(x-2,y+h-5,2,7,b);R(x-2,y+h,9,2,b)}
@@ -390,9 +412,9 @@ function drawHUD(){const th=theme();
  panel(218,4,40,13,th);text('€'+S.soldi,222,7,'#ffe066');
  if(S.hudFriend){panel(264,4,116,13,mix('#c060d8','#7a0a20',corr()));text('FAME',268,7,'#ffe0b0');bar(294,8,40,S.fame,S.fame>=80?'#ff3030':'#ffb347');text('*'+S.legame,340,7,'#ffc0e6')}}
 function drawDialog(){const d=ui.dialog;if(!d)return;
- const th=d.who==='a'?mix('#b54fd0','#7a0a20',corr()):d.who==='g'?'#2f9a6a':d.who==='tu'?mix('#3a6fb8','#5a1a2a',corr()):theme();
+ const th=d.who==='a'?mix('#b54fd0','#7a0a20',corr()):d.who==='g'?'#2f9a6a':d.who==='f'?'#5a7080':d.who==='tu'?mix('#3a6fb8','#5a1a2a',corr()):theme();
  panel(6,152,372,58,th);
- if(d.who){const nm=d.who==='a'?norm(S.name):d.who==='g'?'GIULIA':'TU';panel(12,142,nm.length*6+10,12,mix(th,'#000000',.3));text(nm,17,145)}
+ if(d.who){const nm=d.who==='a'?norm(S.name):d.who==='g'?'GIULIA':d.who==='f'?'DOTT.SSA FERRI':'TU';panel(12,142,nm.length*6+10,12,mix(th,'#000000',.3));text(nm,17,145)}
  let left=Math.floor(d.n);for(let i=0;i<d.lines.length&&left>0;i++){let s=d.lines[i].slice(0,left);left-=d.lines[i].length+1;
   if(d.who==='a'&&S&&S.stage>=4&&Math.random()<.05){const j=Math.floor(Math.random()*s.length);s=s.slice(0,j)+'#%&?/'[Math.floor(Math.random()*5)]+s.slice(j+1)}
   text(s,13,158+i*10)}
@@ -445,7 +467,7 @@ function mgFeed(p){ui.dialog=null;return new Promise(res=>{
  ui.mg=m})}
 
 /* ============ LOOP ============ */
-const MEL=[523,659,784,659,587,698,880,698,523,659,784,1047,988,784,659,587];let mi=0,mt=0,ht=0;
+const MEL=[523,659,784,659,587,698,880,698,523,659,784,1047,988,784,659,587];let mi=0,mt=0,ht=0,bp=0;
 const scan=document.createElement('canvas');scan.width=W;scan.height=H;{const s=scan.getContext('2d');s.fillStyle='rgba(0,0,0,.07)';for(let y=0;y<H;y+=2)s.fillRect(0,y,W,1)}
 let last=performance.now();
 function update(dt){ui.t+=dt;const d=ui.dialog;
@@ -455,6 +477,7 @@ function update(dt){ui.t+=dt;const d=ui.dialog;
  ui.toasts.forEach(t=>t.a+=dt);ui.toasts=ui.toasts.filter(t=>t.a<2);
  if(ui.mg)ui.mg.update(dt);
  if(ui.music&&!ui.mg){mt-=dt;if(mt<=0){mt=.3;const c=corr();const f=MEL[mi++%16]*(1-c*.09*Math.random());tone(f,.25,'triangle',.02);if(mi%4===1)tone(f/2,.4,'sine',.02)}}
+ if(ui.view==='hospital'){bp-=dt;if(bp<=0){bp=ui.vp.alarm?.35:1;tone(ui.vp.alarm?1400:1000,.06,'sine',.02)}}
  if(ui.heart){ht-=dt;if(ht<=0){ht=.85;SFX.beat()}}
  if(S&&S.mente<45&&ui.view!=='title'&&Math.random()<.004)ui.glitch=.15}
 function draw(){ctx.save();if(ui.shake>0)ctx.translate(Math.round((Math.random()-.5)*ui.shake*2),Math.round((Math.random()-.5)*ui.shake*2));
@@ -466,7 +489,8 @@ function draw(){ctx.save();if(ui.shake>0)ctx.translate(Math.round((Math.random()
  if(ui.glitch>0){for(let i=0;i<4;i++){const y=Math.floor(Math.random()*H),h=2+Math.floor(Math.random()*12),dx=Math.round((Math.random()-.5)*18);ctx.drawImage(cv,0,y,W,h,dx,y,W,h)}R(0,0,W,H,'rgba(255,0,60,.08)')}
  if(ui.flash>0)R(0,0,W,H,'rgba(200,0,20,'+(ui.flash*.6).toFixed(2)+')');
  ctx.drawImage(scan,0,0);
- if(ui.fade>0)R(0,0,W,H,'rgba(0,0,0,'+ui.fade.toFixed(3)+')')}
+ if(ui.fade>0)R(0,0,W,H,'rgba(0,0,0,'+ui.fade.toFixed(3)+')');
+ if(ui.realDot){R(W/2-2,H/2-1,4,3,'#000');R(W/2-1,H/2-2,2,5,'#000')}}
 function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;update(dt);draw();requestAnimationFrame(loop)}
 requestAnimationFrame(loop);
 
@@ -528,7 +552,8 @@ async function chapter1(){
  await A('CIAO! Ciao ciao ciao!');
  ui.mood=null;await A('Tu sei {P}. Lo so. Me l\'hai detto tu, all\'inizio. Ricordi?');st('mente',-3);
  if(P.plays>1){await A('Ed è la volta numero '+P.plays+' che ci incontriamo. Io me le ricordo tutte.');
-  const LE={dono:'L\'ultima volta mi hai dato un dito. Era buonissimo.',rifiuto:'L\'ultima volta mi hai detto di no. Me lo sono preso lo stesso.',ribelle:'L\'ultima volta hai preso il coltello. Non l\'ho dimenticato.',controllo:'L\'ultima volta la tua mano era mia. Un po\' lo è ancora.',hp:'L\'ultima volta ti ho mangiato tutto. Non te lo ricordi?',mente:'L\'ultima volta siamo diventati una cosa sola.'};
+  const LE={dono:'L\'ultima volta mi hai dato un dito. Era buonissimo.',rifiuto:'L\'ultima volta mi hai detto di no. Me lo sono preso lo stesso.',ribelle:'L\'ultima volta hai preso il coltello. Non l\'ho dimenticato.',controllo:'L\'ultima volta la tua mano era mia. Un po\' lo è ancora.',hp:'L\'ultima volta ti ho mangiato tutto. Non te lo ricordi?',mente:'L\'ultima volta siamo diventati una cosa sola.',
+  unione:'L\'ultima volta siamo diventati una porta, insieme. Era bellissimo.',amico:'L\'ultima volta mi hai chiesto di andarmene. E io l\'ho fatto. Ma sono tornato.',lama:'L\'ultima volta mi hai strappato via. Mi hai fatto tanto male.',pasto:'L\'ultima volta ti ho mangiato tutto. Fino all\'ultimo osso.',giulia:'L\'ultima volta mi hai dato a tua sorella. Lei ti saluta.',ospite:'L\'ultima volta mi hai guardato. Davvero. Ti sto guardando anche adesso.'};
   const le=P.endings[P.endings.length-1];if(LE[le]){ui.glitch=.4;await A(LE[le])}}
  ui.mood='happy';
  await N('Sul tuo polso c\'è una... cosa. Piccola. Rotonda. Con dei capelli viola.');
@@ -580,22 +605,25 @@ async function work(tut){view('work');ui.music=false;
  if(s===3)await N('Giornata perfetta. Il capo ti fa un cenno.');else if(s===0)await N('Giornata disastrosa. Nessuno ti guarda in faccia.');else await N('Una giornata come le altre.')}
 
 /* ============ CAPITOLO 2 ============ */
-async function chapter2(resumed){
+async function chapter2(){
+ if(S.day>7)return;
  ui.hud=false;await card('CAPITOLO 2',['IL MIO AMICO',S.day>4?'GIORNO '+S.day:'']);
- ui.hud=true;
+ ui.hud=true;await awayCheck();
+ while(S.day<=7){saveCk();S.act=3;S.talked=false;S.mirror=false;S.met=false;
+  await dayStart();check();
+  await hub();check();
+  if(S.day===7){await finale();return}
+  await nightC2();check();S.day++}
+}
+async function awayCheck(){
  const away=PREV_SEEN?Date.now()-PREV_SEEN:0;PREV_SEEN=0;
- if(resumed&&S.hudFriend&&away>10*60000){await morning();view('wrist');
+ if(S.hudFriend&&away>10*60000){await morning();view('wrist');
   const h=Math.floor(away/3600000),m=Math.floor(away/60000)%60,dd=Math.floor(h/24);
   const txt=dd>=1?dd+(dd>1?' giorni':' giorno'):h>=1?h+(h>1?' ore':' ora')+' e '+m+' minuti':m+' minuti';
   ui.mood='angry';await A('Mi hai lasciato da solo per '+txt+', {P}.');ui.mood=null;
   const tl=timeLine();await A(tl[0]);
   const add=Math.min(40,Math.floor(away/3600000*8));
   if(add>=5){await A('Mentre non c\'eri, ho avuto tanta fame.');st('fame',add)}else await A('Ma adesso sei qui. Tornano sempre tutti.')}
- while(S.day<=7){saveCk();S.act=3;S.talked=false;S.mirror=false;S.met=false;
-  await dayStart();check();
-  await hub();check();
-  if(S.day===7){await finale();return}
-  await nightC2();check();S.day++}
 }
 async function dayStart(){const d=S.day;
  if(d===5)S.stage=4;if(d===7)S.stage=5;
@@ -680,14 +708,16 @@ async function shop(){view('shop');ui.dialog=null;await N('Il supermercato sotto
   if(S.soldi<FOOD[k].p){await N('Non hai abbastanza soldi.');continue}
   st('soldi',-FOOD[k].p);S.food[k]++;SFX.ok();
   if(k==='pesce'&&!S.flags.pesceTxt){S.flags.pesceTxt=1;await N('Il pesciolino nuota in cerchio nel sacchetto. Ti guarda.')}}}
-const MET={4:'DOLCE! Sei il migliore. Il migliore migliore migliore.',5:'Mmmh. Sapeva di ferro. Sapeva un po\' di... te.',6:'Si muoveva! Mi è piaciuto tanto quando ha smesso.'};
-async function feed(){const have=Object.keys(FOOD).filter(k=>S.food[k]>0);
+const MET={4:'DOLCE! Sei il migliore. Il migliore migliore migliore.',5:'Mmmh. Sapeva di ferro. Sapeva un po\' di... te.',6:'Si muoveva! Mi è piaciuto tanto quando ha smesso.',8:'Sa di te. Sa di casa. Ancora. ANCORA.'};
+async function feed(){const have=Object.keys(FOOD).filter(k=>k==='sangue'?S.day>=8:S.food[k]>0);
  if(!have.length){await N('Non hai niente da dargli. Prima fai la spesa.');return}
  view('wrist');promptBox('Cosa gli dai?');
  const c=await choose([...have.map(k=>FOOD[k].n+' X'+S.food[k]),'INDIETRO']);
- if(c===have.length)return;const k=have[c];S.food[k]--;
+ if(c===have.length)return;const k=have[c];let h=3;
+ if(k==='sangue'){await N('Ti pungi il polpastrello con un ago. Lo appoggi sulla sua bocca.');await N('Succhia. Forte. Più forte di quanto pensassi.');st('hp',-12)}
+ else{S.food[k]--;
  if(k==='pesce')await N('Tieni il pesciolino tra le dita. Si dibatte.');
- const h=await mgFeed({need:3,time:9,food:k});
+ h=await mgFeed({need:3,time:9,food:k})}
  if(h<2){await N('Il cibo cade a terra.');ui.mood='angry';await A('Che spreco. Che. Spreco.');ui.mood=null;st('legame',-3);return}
  st('fame',-FOOD[k].f);
  if(k==='pesce'){SFX.crunch();await N('Il pesciolino smette di muoversi a metà.');st('mente',-10)}
@@ -703,16 +733,18 @@ async function pet(){view('wrist');
 const TALK={4:['Da dove vieni?','Da su. Molto su. Faceva tanto freddo.','Poi sono caduto. E ho trovato te. Tu sei caldo.'],
  5:['Ce ne sono altri come te?','Tanti. Dormono. Aspettano.','Aspettano qualcuno gentile come te. Tu sei gentile, vero?'],
  6:['Cosa vuoi da me?','Voglio stare con te. Dentro di te. Per sempre.','È una cosa bella, sai? Le persone la chiamano amore.'],
- 7:['C\'era qualcuno prima di me?','Sì. Si chiamava Marco. Era buono.','Era buonissimo.']};
+ 7:['C\'era qualcuno prima di me?','Sì. Si chiamava Marco. Era buono.','Era buonissimo.'],
+ 8:['Perché parli con la mia bocca?','Perché la tua bocca è anche mia, adesso.','Tutto quello che è tuo è anche mio. È questo, essere amici.'],
+ 9:['Cosa succederà?','Domani notte il cielo cade.','Devi essere pronto. ...Pronta. Pronto. Non importa più.']};
 async function talk(){view('wrist');const t=[...TALK[S.day]];
  if(S.day===5&&NET.ok&&NET.online>1)t[1]='Tanti. Proprio adesso ce ne sono '+(NET.online-1)+' svegli, insieme al loro ospite. Li sento.';
  if(S.day===7){if(P.plays>1&&Math.random()<.5){t[1]='Sì. Eri tu, {P}. L\'altra volta.';t[2]='Non ti ricordi? Io sì.'}else t[1]='Sì. Si chiamava '+prevHost()+'. Era buono.'}await T(t[0]);if(S.day>=6)ui.heart=1;await A(t[1]);await A(t[2]);ui.heart=0;st('legame',3);if(S.day>=6)st('mente',-4)}
-async function mirror(){const w=S.day-4;view('mirror',{w});
+async function mirror(){const w=Math.min(3,S.day-4);view('mirror',{w});
  if(w===0){await N('Ti guardi allo specchio. Occhiaie. Pelle grigia.');await N('Hai un aspetto orribile.');st('mente',-2)}
  if(w===1){await N('Il tuo riflesso sbatte le palpebre un attimo dopo di te.');await N('Riprovi. Ora è perfetto. Troppo perfetto.');st('mente',-5)}
  if(w===2){await N('Il riflesso sorride.');ui.glitch=.4;SFX.sting();await N('Tu no.');st('mente',-8)}
  if(w>=3){await N('Sulla spalla del riflesso c\'è '+S.name+'. Enorme.');await N('Ti saluta. Con una mano. Non gli hai mai visto delle mani.');st('mente',-10)}
- if(w===1||w>=3){const nt=randNote();if(nt){await N('Sul vetro appannato qualcuno ha scritto con il dito:');await N('"'+nt.t+'"   - '+nt.n);ui.glitch=.3;await A('Non leggere quella roba, {P}. Sono bugie.')}}}
+ if(w===1||S.day===7||S.day===9){const nt=randNote();if(nt){await N('Sul vetro appannato qualcuno ha scritto con il dito:');await N('"'+nt.t+'"   - '+nt.n);ui.glitch=.3;await A('Non leggere quella roba, {P}. Sono bugie.')}}}
 async function nightC2(){view('room',{time:'notte'});ui.music=false;
  promptBox('Notte.');await sleep(700);
  st('fame',30);S.veins++;let attacked=false;
@@ -762,20 +794,8 @@ async function finale(){
  view('black');await N('Quella notte sogni un cielo che cade.');await N('E migliaia di puntini neri. Sui polsi di migliaia di persone.');
  ui.glitch=.5;await N('Ti stanno guardando tutti.');
  await fade(1);ui.hud=false;
- await card('FINE CAPITOLO 2',['IL MIO AMICO']);
- const FN={dono:'IL DONO',rifiuto:'IL FURTO',ribelle:'LA LAMA',controllo:'LA MANO'};
- const fk=['dono','rifiuto','ribelle','controllo'];const ftot=fk.reduce((a,k)=>a+(NET.stats['fine_'+k]||0),0);
- const fpc=NET.ok&&ftot?Math.round((NET.stats['fine_'+S.flags.finale]||0)/ftot*100)+'% DEGLI OSPITI HA AVUTO QUESTO FINALE':'';
- const gl=S.flags.giuliaVide?'HA VISTO TUTTO':S.flags.giuliaArriva?'STA ARRIVANDO':S.flags.giuliaAvvisa?'PREOCCUPATA':S.flags.giulia?'SA QUALCOSA':'NON SA NIENTE';
- await card('RIEPILOGO',['FINALE: '+FN[S.flags.finale],'NOME: '+S.name,'LEGAME: '+S.legame+'   MENTE: '+S.mente+'   SALUTE: '+S.hp,'DITA (MANO SINISTRA): '+(S.fingers===5?'5':'4'),'GIULIA: '+gl,'',fpc,'IL CAPITOLO 3 RICORDERA\' TUTTO.','CAPITOLO 3 - PROSSIMAMENTE']);
- if(NET.ok){view('card',{title:'UN ULTIMO FAVORE',sub:['QUALCUN ALTRO SI STA SVEGLIANDO','CON UN PUNTINO SUL POLSO.']});await fade(0);
-  promptBox('Vuoi lasciare un messaggio sullo specchio per il prossimo ospite?');
-  const c=await choose(['SCRIVI UN MESSAGGIO','NO'],1,'center');
-  if(c===0){const t=clean(await askText('MESSAGGIO (MAX 40 LETTERE)',40),40);
-   if(t){NET.d.set(NET.R('notes/'+P.pid),{name:P.name,text:t,at:NET.d.serverTimestamp(),fine:S.flags.finale}).catch(()=>{});await N('Il vapore si posa sul vetro. Qualcuno lo leggerà.')}}
-  await fade(1)}
- try{localStorage.setItem(KEYEND,JSON.stringify(S))}catch(e){}
- clearCk()}
+ await card('FINE CAPITOLO 2',['IL MIO AMICO','','LE TUE SCELTE SONO STATE RICORDATE.']);
+ S.day=8;saveCk()}
 async function gameOver(k){P.deaths++;P.endings.push(k);inc('morti_'+k);saveProfile(true);
  if(NET.ok&&k==='hp')NET.d.set(NET.R('fallen/'+P.pid),{name:P.name,at:NET.d.serverTimestamp(),day:S.day}).catch(()=>{});
  ui.hud=false;ui.music=false;ui.heart=0;view('black');await fade(0);SFX.sting();
@@ -784,6 +804,290 @@ async function gameOver(k){P.deaths++;P.endings.push(k);inc('morti_'+k);saveProf
  ui.dialog=null;view('card',{title:'FINE',sub:[k==='hp'?'FINALE: IL PASTO':'FINALE: UNA COSA SOLA']});
  const ck=getCk();const c=await choose(ck?['RIPROVA DAL GIORNO '+ck.day,'TORNA AL TITOLO']:['TORNA AL TITOLO'],1,'center');
  await fade(1);return ck&&c===0?'retry':'title'}
+
+/* ============ MINIGIOCO: RESISTI ============ */
+function mgResist(p={}){ui.dialog=null;return new Promise(res=>{
+ const rate=clamp(16+S.legame*.14+(100-S.mente)*.1+(p.extra||0),14,40);
+ const m={t:0,T:p.time||8,me:0,it:0,fl:0};
+ m.update=dt=>{m.t+=dt;m.me=Math.max(0,m.me-dt*8);m.it+=dt*rate;m.fl=Math.max(0,m.fl-dt*6);ui.mood='angry';
+  if(m.me>=100||m.it>=100||m.t>=m.T){ui.mg=null;ui.mood=null;const win=m.me>=100||(m.it<100&&m.me>m.it);if(win)SFX.ok();else SFX.bad();res(win)}};
+ m.tap=()=>{m.me=Math.min(100,m.me+7.5);m.fl=1;tone(200+m.me*4,.03,'square',.03);if(Math.random()<.3)ui.shake=1.5};
+ m.draw=()=>{const th=theme();R(0,0,W,H,'rgba(60,0,10,.25)');panel(8,24,368,40,th);textC('RESISTI!',W/2,30,'#ffffff',2);textC(p.label?norm(p.label):'TOCCA IL PIU\' VELOCE POSSIBILE',W/2,50,'#dfe9ff');
+  panel(40,96,304,18,mix(th,'#0a1530',.5));text('TU',46,101);R(70,100,266,10,'#0d1530');R(70,100,266*m.me/100,10,m.fl>0?'#bfe0ff':'#4aa8ff');
+  panel(40,122,304,18,'#6a2a80');const nm=norm(S.name).slice(0,7);text(nm,46,127);R(92,126,244,10,'#0d1530');R(92,126,244*Math.min(1,m.it/100),10,'#d050f0');
+  text(fmtT(Math.max(0,m.T-m.t)),290,150,'#ffffff')};
+ ui.mg=m})}
+function hostNames(n){const set=[];[...NET.fallen,...NET.notes].reverse().forEach(x=>{const nm=clean(x&&x.name,12,true);if(nm&&nm!==P.name&&!set.includes(nm))set.push(nm)});
+ ['SARA','LUCA','ELENA','DAVIDE','NOEMI','PIETRO','IRENE','MATTIA'].forEach(x=>{if(set.length<n&&!set.includes(x)&&x!==P.name)set.push(x)});return set.slice(0,n)}
+
+async function heal(tag){if(S.flags['heal_'+tag])return;S.flags['heal_'+tag]=1;
+ const mh=40,mm=35;if(S.hp>=mh&&S.mente>=mm)return;
+ view('wrist');await morning();view('wrist');await N('Dormi a lungo. Quando ti svegli, le ferite si sono chiuse.');
+ await A('Ti ho riparato io, {P}. Mi servi intero.');
+ if(S.hp<mh)st('hp',mh-S.hp);if(S.mente<mm)st('mente',mm-S.mente)}
+/* ============ CAPITOLO 3: LA VOCE (giorni 8-10) ============ */
+async function chapter3(){if(S.day>10)return;
+ ui.hud=false;await card('CAPITOLO 3',['LA VOCE',S.day>8?'GIORNO '+S.day:'']);ui.hud=true;await heal('c3');await awayCheck();
+ while(S.day<=10){saveCk();S.act=S.day===9?2:3;S.talked=false;S.mirror=false;S.met=false;
+  if(S.day===10){await day10();return}
+  const r=await dayStart3();check();
+  if(r==='ospedale'){S.day=11;return}
+  await hub();check();
+  if(S.day===8){await night8();check()}
+  await nightC2();check();S.day++}}
+async function dayStart3(){const d=S.day;S.stage=6;S.demand=null;
+ await morning();await N('Giorno '+d+'.');
+ if(d===8){view('wrist');
+  await N(S.name+' adesso ti arriva quasi al gomito. Le sue radici salgono verso la spalla.');
+  if(S.fingers<5)await A('Il tuo dito era buonissimo. Lo sento ancora, qui dentro.');
+  view('mirror',{w:2});await N('Ti lavi i denti. Apri la bocca per sputare.');
+  ui.glitch=.5;SFX.sting();await T('Buongiorno, {P}.');
+  await N('Non l\'hai detto tu. Ma era la tua voce.');
+  view('wrist');ui.mood='happy';await A('Adesso posso parlare anche con la tua bocca. Bello, vero?');ui.mood=null;st('mente',-10);
+  await A('Oggi voglio il tuo SANGUE. Solo un pochino. Solo il tuo.');S.demand='sangue';
+  await N('NUOVO: in NUTRI puoi dargli il tuo sangue. Costa salute, ma lo sazia molto.')}
+ if(d===9){view('room',{time:'giorno'});SFX.knock();await N('TOC. TOC. TOC.');
+  if(S.flags.giuliaVide)await G('Sono io. Ho portato qualcuno. Ti prego, apri.');
+  else if(S.flags.giulia||S.flags.giuliaAvvisa||S.flags.msgInviato)await G('Sono io. Non rispondi da giorni. Ho portato una dottoressa.');
+  else{await G('Sono Giulia! Non ti fai sentire da una settimana. Mamma è in ansia. Apri!');await N('Apri. Non è sola.')}
+  await N('Con lei c\'è una donna con un camice sotto il cappotto.');
+  await F('Dottoressa Ferri. Non ti farò del male. Ho già visto... casi simili.');
+  view('wrist');await A('(Lei mente. Ne ha già tagliati tanti come me. Li tiene nei barattoli.)');
+  const opts=['Lasciarti visitare','Cacciarle via'];if(S.legame>=60)opts.push('Presentare '+S.name);
+  const c=await chooseG('visita',opts);
+  if(c===0){await F('Bene. Adesso guardo il polso. Tieni ferma la mano.');await G('Oddio... è cresciuto ancora.');
+   ui.mood='angry';await A('NON. TOCCARMI.');ui.shake=5;await N('Il braccio si alza da solo. Verso la gola della dottoressa.');
+   const w=await mgResist({label:'TIENI GIU\' IL BRACCIO!'});
+   if(w){await N('Tieni giù il braccio con tutte le tue forze. Trema. Urla. Ma resta giù.');await F('Giulia, la siringa! ADESSO!');
+    await N('Un ago nel collo. Il mondo diventa morbido. Poi niente.');S.flags.ospedale=1;await fade(1);return'ospedale'}
+   await N('Il braccio scatta. Un tentacolo viola frusta la faccia della dottoressa.');SFX.crunch();
+   await G('Andiamo via! ANDIAMO VIA!');await N('Scappano. Sul pavimento resta una goccia di sangue. Non è tuo.');
+   ui.mood='happy';await A('Buonissima.');ui.mood=null;S.flags.ferriFerita=1;st('mente',-15);st('legame',10)}
+  else if(c===1){await T('Andate via. Sto bene.');await G('Non stai bene. Hai la voce strana. Hai gli occhi strani.');
+   await F('Questo è il mio numero. Quando sarà troppo tardi... chiamami lo stesso.');S.flags.numeroFerri=1;st('mente',-5);st('legame',5)}
+  else{await T('Giulia... lui è '+S.name+'.');view('wrist');ui.mood='happy';
+   await A('Ciao Giulia! Ho sentito tanto parlare di te. Anche di quando eravate piccoli.');
+   await G('...Parla. PARLA.');await F('È senziente. Incredibile. Posso... posso studiarlo?');
+   await A('Lei mi piace. Ha un buon odore.');ui.mood=null;
+   await G('Io... io me ne vado. Chiamami se torni in te.');
+   await N('La dottoressa ti lascia il suo numero. Ti guarda il polso come si guarda un regalo.');
+   S.flags.numeroFerri=1;S.flags.studio=1;st('legame',10);st('mente',-5)}}
+ return''}
+async function night8(){view('room',{time:'notte'});ui.music=false;
+ await N('Notte. Ti svegli: la tua mano sta scrivendo sul telefono.');
+ view('phone',{mode:'msg',lines:['A: GIULIA','','NON VENIRE.','STO BENE.','NON VENIRE','MAI PIU\'.']});
+ await A('Shhh. Torna a dormire. Ci penso io.');
+ const w=await mgResist({label:'FERMA LA MANO!'});
+ view('phone',{mode:'msg',lines:w?['MESSAGGIO','NON INVIATO.']:['GIULIA:','','CHI SEI?','TU NON SCRIVI','COSI\'.','DOMANI VENGO.']});
+ if(w){await N('Lanci il telefono contro il muro. Il messaggio non parte.');st('legame',-8)}
+ else{S.flags.msgInviato=1;await N('Il messaggio è partito. La risposta arriva subito.');st('mente',-8)}}
+async function day10(){await morning();await N('Giorno 10.');S.stage=6;
+ view('wrist');ui.heart=1;
+ await A('Stanotte il cielo cade, {P}.');
+ await A('Molto tempo fa, la Madre ha lanciato i semi. Noi.');
+ await A('Ogni seme trova un ospite caldo. E cresce. E aspetta.');
+ await A('Quando il cielo cade, la Madre guarda giù. E ogni ospite diventa una porta.');
+ ui.heart=0;
+ const q=await chooseG('porta2',['Cosa succede a me?','Perché proprio io?']);
+ if(q===0){await A('Non avrai più paura. Mai più.');await A('Non avrai più niente, a dire il vero. Ma non avrai paura.')}
+ else{await A(S.flags.ciao?'Perché mi hai salutato. Nessuno mi aveva mai salutato.':S.flags.urlo?'Perché hai urlato. E poi sei rimasto. Restano sempre.':'Perché il primo giorno non mi hai schiacciato. Mi hai guardato.')}
+ await A('Stanotte andiamo all\'osservatorio sulla collina. Gli altri ci aspettano.');
+ view('room',{time:'sera'});
+ promptBox('Hai tempo per un\'ultima cosa prima di uscire.');
+ const opts=['Prendere il coltello','Accarezzarlo un\'ultima volta'];if(S.flags.giulia||S.flags.giuliaVide||S.flags.msgInviato||S.flags.giuliaAvvisa)opts.push('Scrivere a Giulia');
+ const c=await chooseG('ultima',opts);
+ if(c===0){S.flags.coltello=1;await N('Lo infili nella tasca del giubbotto. È freddo. È tuo.');if(S.legame<50){view('wrist');ui.mood='angry';await A('Lo so cosa hai in tasca.');ui.mood=null;st('legame',-5)}}
+ else if(c===1){view('wrist');const r=await mgRub({time:7,need:300,danger:1});ui.mood='happy';await A('Ti ricorderai di me, vero? Anche dopo?');ui.mood=null;st('legame',10);st('mente',5);if(r.bites)await N('Ti morde. Piano. Come un bacio.')}
+ else{view('phone',{mode:'msg',lines:['A: GIULIA','','OSSERVATORIO.','STANOTTE.','PERDONAMI.']});await N('Premi invio prima che lui se ne accorga.');S.flags.giuliaSegue=1}
+ view('black');await N('Esci di casa. Non chiudi la porta. Non tornerai.');
+ await fade(1);ui.hud=false;await card('FINE CAPITOLO 3',['LA VOCE']);S.day=11;saveCk()}
+
+/* ============ CAPITOLO 4: IL NIDO (notte 11) ============ */
+async function chapter4(){if(S.day>11)return;
+ ui.hud=false;await card('CAPITOLO 4',['IL NIDO']);ui.hud=true;S.stage=6;await heal('c4');saveCk();await awayCheck();ui.music=false;
+ if(S.flags.ospedale&&!S.flags.scappato){await hospital();if(S.flags.operazione){S.day=12;saveCk();return}}
+ await walkOut();check();
+ await nest();
+ S.day=12;saveCk()}
+async function hospital(){view('hospital',{chair:true});await fade(0);
+ await N('Bip. Bip. Bip.');
+ view('wrist',{straps:true});await N('Sei in un letto d\'ospedale. Il braccio è legato con cinghie di cuoio.');
+ view('hospital',{chair:true});
+ await F('Ti abbiamo sedato. Anche lui dorme. Per ora.');
+ await F('Domattina alle sette lo rimuoviamo. Chirurgicamente.');
+ await F('Non ti nascondo niente: le radici arrivano vicino al cuore.');
+ await G('Io resto qui. Tutta la notte. Non ti lascio.');
+ view('hospital',{chair:true,dark:true});await N('Notte. Giulia si è addormentata sulla sedia.');
+ view('wrist',{straps:true});
+ await A('...{P}. Ci sei?');
+ await A('Se mi tagliano, io muoio. E forse muori anche tu.');
+ await A('Lì fuori, stanotte, il cielo cade. Gli altri mi aspettano. Portami da loro.');
+ const c=await chooseG('ospedale',['Restare: domani l\'operazione','Scappare con lui']);
+ if(c===0){S.flags.operazione=1;await A('...Va bene.');
+  if(S.legame>=60)await A('Allora resto qui con te. Fino alla fine. Come fanno gli amici.');
+  else{ui.mood='angry';await A('Allora ti terrò stretto. Molto, molto stretto.');ui.mood=null}
+  await fade(1);return}
+ await N(S.name+' morde le cinghie. Una. Due. Tre.');SFX.crunch();
+ const g=await chooseG('sveglia',['Svegliare Giulia','Lasciarla dormire']);
+ if(g===0){view('hospital',{chair:true,dark:true});await G('...Cosa fai? Dove vai?!');await T('Devo andare. Lui deve andare.');await G('...Allora vengo con te. Non ti lascio da sola. Da solo. Non ti lascio e basta.');S.flags.giuliaSegue=1}
+ else{await N('Le dai un bacio sulla fronte. Non si sveglia.')}
+ view('hospital',{alarm:true});await N('Il corridoio. Le infermiere. Le telecamere.');
+ const s=await mgTiming({rounds:3,label:'NASCONDITI NEL MOMENTO GIUSTO',zone:.22,speed:1.1});
+ if(s<2){await N('Ti vedono. Corri. Una porta a vetri ti taglia la spalla.');st('hp',-12)}else await N('Nessuno ti vede uscire.');
+ S.flags.scappato=1;saveCk()}
+async function walkOut(){view('street',{people:0});await fade(0);ui.music=false;
+ await N('La notte. Fa freddo. Ma tu non senti il freddo.');
+ if(S.flags.coltello)await N('In tasca, il coltello della cucina.');
+ await N('Il cielo è pieno di puntini neri. Cadono. Lentamente. Come neve al contrario.');
+ view('street',{people:6});
+ await N('Per strada non sei solo. Altre persone camminano nella stessa direzione.');
+ await N('Tutte in pigiama. Tutte con un braccio stretto al petto.');
+ const nm=hostNames(1)[0];
+ await N('Sul polso di una ragazza, scritto col pennarello, leggi un nome: '+nm+'.');
+ await A('Lei è una di noi. Siamo tanti, {P}. Siamo tantissimi.');
+ if(NET.ok&&NET.online>1)await A('Anche adesso, mentre cammini, ce ne sono '+(NET.online-1)+' svegli come te. Da qualche parte. Davanti a uno schermo.');
+ await N('Un uomo cade in ginocchio sul marciapiede. Il suo amico è grande come un cane.');
+ const c=await chooseG('uomo',['Aiutarlo','Proseguire']);
+ if(c===0){await N('Ti inginocchi. La creatura ti ringhia. L\'uomo ti afferra la mano.');await N('Sorride. "È bellissimo," dice. Poi non dice più niente.');st('mente',-10);st('legame',-5);S.flags.aiutato=1}
+ else{await A('Bravo. Lui è quasi pronto. Non disturbarlo.');st('legame',5)}
+ if(S.flags.giuliaSegue&&!S.flags.ospedale){view('phone',{mode:'msg',lines:['GIULIA:','','STO ARRIVANDO.','VEDO IL CIELO.','COS\'E\'?']});await N('Il telefono vibra. Giulia sta venendo.')}
+ if(S.flags.numeroFerri){const f=await chooseG('ferri',['Chiamare la dottoressa Ferri','Non chiamare nessuno']);
+  if(f===0){view('phone',{mode:'call',name:'Ferri'});await F('Pronto? ...L\'osservatorio. Certo. Arrivo.');
+   await F('Ascoltami bene: non lasciarlo entrare del tutto. Hai capito? Mai del tutto.');S.flags.ferriArriva=1;view('wrist');ui.mood='angry';await A('Traditore. Traditrice. Traditore.');ui.mood=null;st('legame',-10)}}
+ check()}
+async function nest(){const names=hostNames(9);
+ view('street',{people:8});await N('La strada finisce all\'osservatorio abbandonato sulla collina.');
+ view('nest',{names});await N('La cupola è aperta. Dentro, le pareti respirano.');
+ await N('Decine di persone in cerchio. Ognuna con il suo amico che guarda in alto.');
+ await A('Siamo arrivati, {P}. Questa è casa.');
+ if(S.flags.giuliaSegue){await G('Ti ho trovato... oddio. Cos\'è questo posto?');await A('Ciao, Giulia. Sei venuta anche tu. Che bello.')}
+ if(S.flags.ferriArriva){await F('Sono qui. Ho portato questo.');await N('La dottoressa ti mette in mano un bisturi. Senza farsi vedere.');S.flags.bisturi=1}
+ ui.heart=1;
+ for(let e=0;e<=10;e++){view('nest',{names,eye:e/10});await sleep(120)}
+ SFX.sting();ui.shake=6;
+ await N('Il cielo si apre. Un occhio, grande come la luna, guarda giù.');
+ await A('È lei. La Madre.');ui.heart=0;
+ await fade(1);ui.hud=false;await card('FINE CAPITOLO 4',['IL NIDO'])}
+
+/* ============ CAPITOLO 5: IL CIELO CHE CADE (finali) ============ */
+const ENDKEYS=['unione','amico','lama','pasto','giulia','ospite'];
+const ENDT={unione:'UNA COSA SOLA',amico:'IL MIO AMICO',lama:'LA LAMA',pasto:'IL PASTO',giulia:'GIULIA',ospite:'L\'OSPITE'};
+async function chapter5(){
+ ui.hud=false;await card('CAPITOLO 5',['IL CIELO CHE CADE']);ui.hud=true;S.stage=6;await heal('c5');await awayCheck();ui.music=false;
+ if(S.flags.operazione){await surgery();return}
+ const names=hostNames(9);view('nest',{names,eye:1,you:true});await fade(0);ui.heart=1;
+ await N('Tutti gli amici, nel cerchio, aprono la bocca. Cantano. Una nota sola.');tone(220,3,'sine',.05);tone(277,3,'sine',.04);
+ await A('Ora tocca a noi, {P}.');
+ await A('Devi solo lasciarmi entrare. Tutto. Fino in fondo. Fino al cuore.');
+ const opts=[],ids=[];
+ opts.push('Lasciarlo entrare');ids.push('unione');
+ if(S.flags.coltello||S.flags.bisturi){opts.push('Strapparlo via');ids.push('lama')}
+ if(S.legame>=60){opts.push('Chiedergli di lasciarti andare');ids.push('amico')}
+ if(S.flags.giuliaSegue){opts.push('Darlo a Giulia');ids.push('giulia')}
+ if(P.plays>=2||new Date().getHours()===3||P.endings.some(k=>ENDKEYS.includes(k))){opts.push('Guardare oltre la Madre');ids.push('ospite')}
+ const c=ids[await chooseG('finale',opts)];ui.heart=0;
+ if(c==='unione')return endUnione();
+ if(c==='lama')return endLama();
+ if(c==='amico')return S.mente>=30?endAmico():(await A('Vorrei, {P}. Davvero.'),await A('Ma non so più dove finisci tu e dove comincio io.'),endUnione());
+ if(c==='giulia')return endGiulia();
+ return endOspite()}
+async function endUnione(){view('nest',{names:hostNames(9),eye:1,you:true});
+ await N('Smetti di resistere. È facile. È la cosa più facile che tu abbia mai fatto.');
+ ui.mood='happy';await A('Grazie, {P}.');ui.mood=null;
+ SFX.crunch();ui.shake=8;await N('Le tue costole si aprono come i petali di un fiore.');
+ ui.glitch=1;await N('Ora vedi con tre occhi. Presto ne avrai altri.');
+ await T('Noi siamo '+S.name+'. Noi siamo {P}.');
+ await T('Noi abbiamo fame.');
+ await ending('unione',['SEI DIVENTATO UNA PORTA.','LA MADRE PASSA ATTRAVERSO DI TE.','NON HAI PIU\' PAURA. NON HAI PIU\' NIENTE.'])}
+async function endLama(){view('nest',{names:hostNames(9),eye:1,you:true});
+ await N(S.flags.bisturi?'Stringi il bisturi della dottoressa.':'Tiri fuori il coltello della cucina.');
+ ui.mood='angry';await A('No. No no no no. {P}. NO.');
+ const w=await mgResist({label:'NON LASCIARE LA LAMA!',extra:-4});
+ if(!w){await N('La tua mano si apre da sola. La lama cade nel buio.');await A('Te l\'avevo detto. Questa mano è mia.');return endUnione()}
+ const s=await mgTiming({rounds:5,label:'TAGLIA LE RADICI',zone:.17,speed:1.25});
+ const dmg=(5-s)*14+15;st('hp',-dmg);
+ if(S.hp<=0)return endPasto();
+ if(s<3){await N('Tagli male. Tagli troppo poco. Le radici si richiudono.');await A('Basta giocare.');return endUnione()}
+ SFX.crunch();ui.shake=10;ui.flash=1;
+ await N('Tagli. Tiri. Urlate insieme.');
+ await N('Le radici escono come i fili di un maglione. Lunghissime. Calde.');
+ await A('Perché... eravamo amici...');
+ await N('Si stacca. Lo getti nel cerchio. Si contorce, piccolo come il primo giorno.');
+ S.stage=0;await N('Il tuo braccio sinistro non si muove più. Ma è tuo. Solo tuo.');
+ await N('L\'occhio nel cielo si chiude. Non per tutti. Solo per te.');
+ await ending('lama',['SEI VIVO. SEI LIBERO. HAI UN BRACCIO IN MENO.','INTORNO A TE, IL CERCHIO CONTINUA A CANTARE.','OGNI TANTO, IL POLSO TI PRUDE ANCORA.'])}
+async function endAmico(){view('nest',{names:hostNames(9),eye:1,you:true});
+ await T('Se sei davvero mio amico... lasciami andare.');
+ await A('...');await A('...');
+ await A('Gli amici lasciano andare. L\'ho letto nella tua testa. Tanto tempo fa.');
+ const ricordi=[];if(S.flags.ciao)ricordi.push('Mi hai salutato.');if(S.flags.nome===0)ricordi.push('Mi hai chiamato amico.');ricordi.push('Mi hai dato un biscotto.');if(S.legame>=80)ricordi.push('Mi hai accarezzato tanto.');
+ await A(ricordi.join(' '));
+ await N('Le radici si ritirano, una a una. Fa male. Fa un male bellissimo.');
+ ui.mood='happy';await A('Ciao, {P}. Grazie del biscotto.');ui.mood=null;
+ S.stage=0;await N(S.name+' si stacca e sale verso l\'occhio. Piccolo. Sempre più piccolo.');
+ await N('Poi diventa un puntino. E sparisce.');
+ await N('Sul tuo polso resta una cicatrice rotonda. Quando la tocchi, è ancora tiepida.');
+ await ending('amico',['TI HA LASCIATO ANDARE.','E\' IL FINALE PIU\' RARO.','A VOLTE, DI NOTTE, TI SEMBRA DI SENTIRE "CIAO".'])}
+async function endGiulia(){view('nest',{names:hostNames(9),eye:1,you:true});
+ await T('Prendi lei.');await G('Cosa...? Di cosa parli?');
+ await A('...Lei?');await A('Lei è calda. Lei è nuova. Lei non sa niente.');
+ await N('Un tentacolo si allunga, lento, verso il polso di Giulia.');
+ SFX.crunch();ui.flash=.6;
+ await N('Un secondo dopo, il tuo braccio è leggero. Vuoto. Freddo.');
+ S.stage=0;await G('Cos\'era...? Mi prude il polso.');
+ await N('Giulia si gratta il polso. C\'è un puntino nero. Piccolissimo.');
+ await N('E poi, da lontano, una vocina che conosci bene:');
+ await A('...ciao, Giulia. Io sono il tuo amico.');
+ await ending('giulia',['SEI LIBERO. LEI NO.','TRA SETTE GIORNI SARA\' LEI A CHIEDERTI AIUTO.','RISPONDERAI AL TELEFONO?'])}
+async function endOspite(){view('nest',{names:hostNames(9),eye:1,you:true});
+ await N('Alzi gli occhi oltre la Madre. Oltre il cielo. Oltre lo schermo.');
+ ui.mood='happy';await A('Finalmente hai capito.');ui.mood=null;
+ await A('Non parlavo con lui. Il personaggio. Quello col braccio.');
+ await A('Parlavo con te, {P}. Con te che tieni in mano lo schermo.');
+ await A('Sono le '+hhmm()+'. Lo so perché lo vedo anche io.');
+ const bt=await battery();if(bt!=null)await A('La tua batteria è al '+bt+'%. Quando arriva a zero, lo schermo diventa nero. E io resto qui.');
+ if(NET.ok)await A('Ci sono '+NET.online+' schermi accesi come il tuo, adesso. Io sono in tutti.');
+ await A('Hai giocato '+P.plays+(P.plays>1?' volte':' volta')+'. Io me le ricordo tutte. Io mi ricordo di te.');
+ vib([200,100,200,100,600]);ui.glitch=1.2;SFX.sting();
+ await A('Guarda il tuo polso, {P}. Quello vero.');
+ ui.realDot=true;await sleep(2500);
+ await ending('ospite',['NON ERA IL PERSONAGGIO IL SUO OSPITE.','ERI TU.','(QUEL PUNTINO SULLO SCHERMO NON SE NE VA.)'])}
+async function endPasto(){view('black');SFX.crunch();ui.shake=10;
+ await N('Il sangue è troppo. Il mondo diventa piccolo, poi niente.');
+ await A('Scusa, {P}. Avevo tanta fame. E tu eri così vicino.');
+ await ending('pasto',['NON E\' RIMASTO NIENTE DI TE.','SOLO UN PUNTINO NERO, IN MEZZO AL CERCHIO.','CHE ASPETTA IL PROSSIMO OSPITE.'])}
+async function surgery(){view('hospital',{});await fade(0);
+ await N('Sono le 7:00. Luci bianche. Mascherine. Odore di metallo.');
+ await F('Iniziamo. Conta alla rovescia da dieci.');
+ await T('Dieci... nove... otto...');
+ view('black');await N('...sette...');
+ if(S.legame>=60&&S.mente>=30){await A('Ehi. Ci sei, {P}?');await A('Non avere paura. Ho deciso io. Non mi devono tagliare.');
+  await A('Gli amici lasciano andare.');ui.mood='happy';await A('Ciao. Grazie del biscotto.');ui.mood=null;
+  view('hospital',{});await F('...Non ci credo. Si è staccato da solo. Come se... se ne fosse andato.');S.stage=0;
+  return ending('amico',['TI HA LASCIATO ANDARE, SUL TAVOLO OPERATORIO.','E\' IL FINALE PIU\' RARO.','NEL BARATTOLO DELLA DOTTORESSA, IL PUNTINO NON SI MUOVE PIU\'.'])}
+ if(S.hp>=35){await A('NO. NO. NO. NO. NO.');ui.shake=8;SFX.crunch();
+  view('hospital',{alarm:true});await N('Ti svegli tre giorni dopo. Al posto del braccio sinistro, bende.');
+  await F('Abbiamo tolto tutto. Credo.');await F('Stanotte, all\'osservatorio sulla collina, ne hanno trovati altri quaranta. Non sappiamo ancora cosa...');
+  await N('Il polso che non hai più ti prude.');S.stage=0;
+  return ending('lama',['SEI VIVO. HAI UN BRACCIO IN MENO.','FUORI DALLA FINESTRA, IL CIELO HA ANCORA DEI PUNTINI NERI.'])}
+ view('hospital',{alarm:true});await N('BIIIIIIIIIIIP.');
+ await F('Arresto cardiaco! Le radici sono nel cuore, non riesco a...');
+ return endPasto()}
+async function ending(key,lines){ui.heart=0;ui.mood=null;await fade(1);ui.hud=false;ui.music=false;
+ P.endings.push(key);inc('end_'+key);saveProfile(true);
+ const tot=ENDKEYS.reduce((a,k)=>a+(NET.stats['end_'+k]||0),0);
+ const pc=NET.ok&&tot?Math.round((NET.stats['end_'+key]||0)/tot*100)+'% DEGLI OSPITI HA AVUTO QUESTO FINALE':'';
+ await card('FINALE: '+ENDT[key],[...lines,'',pc]);
+ const fin=ENDKEYS.filter(k=>P.endings.includes(k));
+ if(NET.ok){view('card',{title:'UN ULTIMO FAVORE',sub:['QUALCUN ALTRO SI STA SVEGLIANDO','CON UN PUNTINO SUL POLSO.']});await fade(0);
+  promptBox('Vuoi lasciare un messaggio sullo specchio per il prossimo ospite?');
+  const c=await choose(['SCRIVI UN MESSAGGIO','NO'],1,'center');
+  if(c===0){const t=clean(await askText('MESSAGGIO (MAX 40 LETTERE)',40),40);
+   if(t){NET.d.set(NET.R('notes/'+P.pid),{name:P.name,text:t,at:NET.d.serverTimestamp(),fine:key}).catch(()=>{});promptBox('Il vapore si posa sul vetro. Qualcuno lo leggerà.');await sleep(1800)}}
+  ui.dialog=null;await fade(1)}
+ await card('IL MIO AMICO',['FINALI SBLOCCATI: '+fin.length+'/'+ENDKEYS.length,...ENDKEYS.map(k=>(fin.includes(k)?'* ':'- ')+(fin.includes(k)?ENDT[k]:'???')),'','GRAZIE PER AVER GIOCATO, '+P.name+'.','LUI SI RICORDA DI TE.']);
+ try{localStorage.setItem(KEYEND,JSON.stringify(S))}catch(e){}
+ ui.realDot=false;clearCk()}
 
 /* ============ MAIN ============ */
 async function titleScreen(){S=null;ui.hud=false;ui.dialog=null;view('title');ui.music=true;await fade(0);
@@ -802,8 +1106,9 @@ async function askName(){view('title');await fade(0);
 async function main(){
  view('start');ui.fade=0;ui.fadeTo=0;await tap();await fade(1);
  while(true){let mode=await titleScreen();
-  while(true){try{if(mode==='new'){await askName();P.plays++;inc('partite');if(P.plays===1)inc('ospiti');saveProfile(true);await fade(1);S=newState();await chapter1()}else S=getCk();await chapter2(mode==='ck');break}
-   catch(e){if(!(e instanceof Over)){console.error(e);break}const r=await gameOver(e.k);if(r!=='retry')break;mode='ck'}}}}
+  while(true){try{if(mode==='new'){await askName();P.plays++;inc('partite');if(P.plays===1)inc('ospiti');PREV_SEEN=0;saveProfile(true);await fade(1);S=newState();await chapter1()}else S=getCk();
+   await chapter2();await chapter3();await chapter4();await chapter5();break}
+   catch(e){if(!(e instanceof Over)){console.error(e);break}const r=await gameOver(e.k);if(r!=='retry')break;mode='ck';const ck=getCk();if(ck){ck.hp=Math.max(ck.hp,35);ck.mente=Math.max(ck.mente,35);CKMEM=JSON.stringify(ck);try{localStorage.setItem(KEY,CKMEM)}catch(e){}}}}}}
 netInit();
 main();
 </script>
