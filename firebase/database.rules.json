@@ -1,0 +1,74 @@
+{
+  "rules": {
+    "mioAmico": {
+      ".read": false,
+      ".write": false,
+
+      "stats": {
+        ".read": true,
+        "$k": {
+          ".write": "$k.matches(/^[a-z0-9_]{1,40}$/)",
+          ".validate": "newData.isNumber() && ((!data.exists() && newData.val() === 1) || (data.exists() && newData.val() === data.val() + 1))"
+        }
+      },
+
+      "presence": {
+        ".read": true,
+        "$id": {
+          ".write": "$id.matches(/^h_[0-9a-f]{16}$/)",
+          ".validate": "newData.hasChildren(['at', 'day']) && newData.child('at').val() === now && newData.child('day').isNumber() && newData.child('day').val() >= 0 && newData.child('day').val() <= 20",
+          "at": { ".validate": true },
+          "day": { ".validate": true },
+          "$other": { ".validate": false }
+        }
+      },
+
+      "players": {
+        "$pid": {
+          ".read": "$pid.matches(/^a_[a-z0-9]{8,20}$/)",
+          ".write": "$pid.matches(/^a_[a-z0-9]{8,20}$/) && newData.exists()",
+          ".validate": "newData.hasChildren(['v', 'name', 'lastSeen', 'plays', 'endings', 'deaths'])",
+          "v": { ".validate": "newData.isString() && newData.val().length <= 20000" },
+          "name": { ".validate": "newData.isString() && newData.val().length <= 12" },
+          "lastSeen": { ".validate": "newData.isNumber()" },
+          "plays": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() < 100000" },
+          "endings": { ".validate": "newData.isString() && newData.val().length <= 300" },
+          "deaths": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() < 100000" },
+          "$other": { ".validate": false }
+        }
+      },
+
+      "notes": {
+        ".read": true,
+        ".indexOn": ["at"],
+        "$id": {
+          ".write": "$id.matches(/^h_[0-9a-f]{16}$/) && newData.exists() && (!data.exists() || data.child('at').val() < now - 60000)",
+          ".validate": "newData.hasChildren(['name', 'text', 'at'])",
+          "name": { ".validate": "newData.isString() && newData.val().matches(/^[A-Z' ]{2,12}$/)" },
+          "text": { ".validate": "newData.isString() && newData.val().matches(/^[A-Z0-9 .,!?'\\-:]{1,40}$/)" },
+          "at": { ".validate": "newData.val() === now" },
+          "fine": { ".validate": "newData.isString() && newData.val().length <= 20" },
+          "$other": { ".validate": false }
+        }
+      },
+
+      "fallen": {
+        ".read": true,
+        ".indexOn": ["at"],
+        "$id": {
+          ".write": "$id.matches(/^h_[0-9a-f]{16}$/) && newData.exists()",
+          ".validate": "newData.hasChildren(['name', 'at', 'day'])",
+          "name": { ".validate": "newData.isString() && newData.val().matches(/^[A-Z' ]{2,12}$/)" },
+          "at": { ".validate": "newData.val() === now" },
+          "day": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 20" },
+          "$other": { ".validate": false }
+        }
+      },
+
+      "broadcast": {
+        ".read": true,
+        ".write": false
+      }
+    }
+  }
+}
