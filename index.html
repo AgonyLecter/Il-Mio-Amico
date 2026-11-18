@@ -7,6 +7,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#000000">
 <title>Il Mio Amico</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="Il Mio Amico">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
 html,body{margin:0;height:100%;background:#000;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
 #c{position:absolute;image-rendering:pixelated;image-rendering:crisp-edges;cursor:pointer}
@@ -1111,6 +1116,7 @@ async function main(){
    catch(e){if(!(e instanceof Over)){console.error(e);break}const r=await gameOver(e.k);if(r!=='retry')break;mode='ck';const ck=getCk();if(ck){ck.hp=Math.max(ck.hp,35);ck.mente=Math.max(ck.mente,35);CKMEM=JSON.stringify(ck);try{localStorage.setItem(KEY,CKMEM)}catch(e){}}}}}}
 netInit();
 main();
+if('serviceWorker'in navigator&&location.protocol!=='file:')addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script>
 </body>
 </html>
