@@ -203,7 +203,7 @@ function press(x,y,kb){
  if(ui.tapRes){const r=ui.tapRes;ui.tapRes=null;SFX.sel();r();return}
  const d=ui.dialog;if(d&&d.res){if(d.n<d.text.length)d.n=d.text.length;else{const r=d.res;d.res=null;r()}}
 }
-cv.addEventListener('pointerdown',e=>{e.preventDefault();if(inputOpen)return;audio();if(!fsTried){fsTried=true;goFS()}pdown=true;const[x,y]=pos(e);ui.px=x;ui.py=y;press(x,y)});
+cv.addEventListener('pointerdown',e=>{e.preventDefault();if(inputOpen)return;audio();pdown=true;const[x,y]=pos(e);ui.px=x;ui.py=y;press(x,y)});
 addEventListener('pointermove',e=>{const[x,y]=pos(e);ui.px=x;ui.py=y;if(ui.choices)ui.hover=hitChoice(x,y);if(ui.mg&&ui.mg.move)ui.mg.move(x,y,pdown)});
 addEventListener('pointerup',()=>{pdown=false;if(ui.mg&&ui.mg.up)ui.mg.up()});
 addEventListener('pointercancel',()=>{pdown=false;if(ui.mg&&ui.mg.up)ui.mg.up()});
@@ -215,13 +215,22 @@ addEventListener('keydown',e=>{if(inputOpen)return;audio();const k=e.key;
   if(k==='ArrowDown'||k==='ArrowRight'){ui.hover=(ui.hover+1)%L;SFX.sel();return}
   if(k==='ArrowUp'||k==='ArrowLeft'){ui.hover=(ui.hover-1+L)%L;SFX.sel();return}
   if((k==='Enter'||k===' ')&&ui.hover>=0){pick(ui.hover);return}return}
- if(k===' '||k==='Enter'){e.preventDefault();if(!fsTried){fsTried=true;goFS()}press(-1,-1,true)}});
+ if(k===' '||k==='Enter'){e.preventDefault();press(-1,-1,true)}});
+/* schermo intero automatico al primo tocco/click ovunque (sui telefoni pointerdown non vale come gesto utente: si riprova su pointerup/touchend/click finché non riesce) */
+function isFS(){return !!(document.fullscreenElement||document.webkitFullscreenElement)}
+function autoFS(e){if(fsTried||isFS())return;
+ if(e.target&&e.target.id==='fs')return; // il pulsante [ ] gestisce da sé
+ if(e.type==='keydown'&&(e.key==='f'||e.key==='F'))return; // il tasto F fa già il toggle
+ goFS()}
+['pointerdown','pointerup','touchend','click','keydown'].forEach(t=>document.addEventListener(t,autoFS,{capture:true,passive:true}));
+document.addEventListener('fullscreenchange',()=>{if(isFS())fsTried=true});
+document.addEventListener('webkitfullscreenchange',()=>{if(isFS())fsTried=true});
 function goFS(toggle){const d=document,el=d.documentElement;
  if(toggle&&(d.fullscreenElement||d.webkitFullscreenElement)){try{(d.exitFullscreen||d.webkitExitFullscreen).call(d)}catch(e){}return}
  const rq=el.requestFullscreen||el.webkitRequestFullscreen;
  try{const p=rq&&rq.call(el,{navigationUI:'hide'});if(p&&p.then)p.then(lockO).catch(()=>{})}catch(e){}lockO()}
 function lockO(){try{if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(()=>{})}catch(e){}}
-document.getElementById('fs').addEventListener('click',()=>{audio();goFS(true)});
+document.getElementById('fs').addEventListener('click',()=>{audio();fsTried=true;goFS(true)});
 document.addEventListener('fullscreenchange',()=>{document.getElementById('fs').style.display=document.fullscreenElement?'none':'block'});
 
 /* ============ CREATURE / ARM ============ */
