@@ -31,9 +31,619 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;touch-action:none
 <canvas id="c"></canvas>
 <div id="fs" title="Schermo intero (F)">[ ]</div>
 <div id="inp"><div class="bx"><div id="inpq"></div><input id="inpt" autocomplete="off" autocorrect="off" spellcheck="false"><button id="inpok">OK</button></div></div>
-<div id="rot"><div class="ph"></div><div>RUOTA IL TELEFONO<br>IN ORIZZONTALE</div></div>
+<div id="rot"><div class="ph"></div><div id="rotT">RUOTA IL TELEFONO<br>IN ORIZZONTALE</div></div>
+<script>
+/* Traduzione inglese: chiave = testo italiano originale */
+const EN={
+"...Neanche io dormo mai.": "...I never sleep either.",
+"Hai fatto colazione? Io sì. Grazie.": "Have you had breakfast? I have. Thank you.",
+"Invece sei qui. Con me. Mi piace.": "But you're here instead. With me. I like that.",
+"Qui dentro è sempre buio. Ma si sta caldi.": "In here it's always dark. But it's warm.",
+"BISCOTTI": "COOKIES",
+"LATTE": "MILK",
+"CARNE CRUDA": "RAW MEAT",
+"PESCIOLINO ROSSO": "GOLDFISH",
+"IL TUO SANGUE": "YOUR BLOOD",
+"SALUTE": "HEALTH",
+"MENTE": "MIND",
+"LEGAME": "BOND",
+"FAME": "HUNGER",
+"CHIAMATA": "INCOMING",
+"IN ARRIVO": "CALL",
+"TOCCA PER CONTINUARE": "TAP TO CONTINUE",
+"NON ERA UNA DOMANDA.": "IT WASN'T A QUESTION.",
+"UN GIOCO CARINO. PROMESSO.": "A CUTE GAME. I PROMISE.",
+"SI GIOCA IN ORIZZONTALE, A SCHERMO INTERO": "PLAY IN LANDSCAPE, IN FULLSCREEN",
+"PC: CLIC / SPAZIO / TASTI 1-9   M AUDIO   F SCHERMO": "PC: CLICK / SPACE / KEYS 1-9   M AUDIO   F FULLSCREEN",
+"CONTIENE TEMI HORROR E SANGUE. PEGI 16.": "CONTAINS HORROR THEMES AND BLOOD. PEGI 16.",
+"SUCCESSO": "SUCCESS",
+"TOCCA AL MOMENTO GIUSTO": "TAP AT THE RIGHT MOMENT",
+"MANCATO": "MISSED",
+"ATTENZIONE AGLI OCCHI ROSSI!": "WATCH OUT FOR THE RED EYES!",
+"STROFINA IL DITO SOPRA DI LUI": "RUB YOUR FINGER OVER IT",
+"TOCCA QUANDO APRE LA BOCCA": "TAP WHEN ITS MOUTH OPENS",
+"CAPITOLO 1": "CHAPTER 1",
+"IL PUNTINO": "THE DOT",
+"Driiin. Driiin. Sono le 7:02.": "Brrring. Brrring. It's 7:02.",
+"Un altro giorno. Uguale a tutti gli altri.": "Another day. Just like all the others.",
+"Ti stiracchi. Ti prude il polso sinistro.": "You stretch. Your left wrist itches.",
+"Guardi il polso. C'è un puntino nero.": "You look at your wrist. There's a black dot.",
+"Piccolissimo. Più piccolo di un neo.": "Tiny. Smaller than a mole.",
+"Ieri sera non c'era. O forse sì?": "It wasn't there last night. Or was it?",
+"Grattarlo": "Scratch it",
+"Disinfettarlo": "Disinfect it",
+"Ignorarlo": "Ignore it",
+"Gratti. Gratti forte.": "You scratch. You scratch hard.",
+"Il puntino non va via. Sembra... più in profondità.": "The dot doesn't go away. It seems... deeper.",
+"Versi un po' di alcol. Brucia.": "You pour on a little rubbing alcohol. It stings.",
+"Per un istante il puntino si ritrae. Come un occhio che si chiude.": "For a moment the dot pulls back. Like an eye closing.",
+"...Me lo sono immaginato.": "...I imagined that.",
+"Sarà una puntura di zanzara. Niente di che.": "Probably a mosquito bite. Nothing serious.",
+"Sei in ritardo. Devi andare al lavoro.": "You're late. You have to go to work.",
+"La sera, a casa, controlli di nuovo il polso.": "In the evening, at home, you check your wrist again.",
+"Il puntino è ancora lì.": "The dot is still there.",
+"Forse è un po' più grande.": "Maybe it's a little bigger.",
+"Quella notte sogni un cielo che cade.": "That night you dream of a falling sky.",
+"Giorno 2.": "Day 2.",
+"Il puntino è diventato un bozzo. Tiepido.": "The dot has become a lump. Lukewarm.",
+"Pulsa a tempo con il tuo cuore.": "It throbs in time with your heart.",
+"No. Non proprio a tempo. Sempre un battito dopo.": "No. Not quite in time. Always one beat behind.",
+"Chiamare il medico": "Call the doctor",
+"Cercare su internet": "Search online",
+"Coprirlo con un cerotto": "Cover it with a band-aid",
+"STUDIO MEDICO": "DOCTOR'S OFFICE",
+"PRIMA DATA": "FIRST AVAILABLE",
+"LIBERA:": "APPOINTMENT:",
+"TRA 23 GIORNI.": "IN 23 DAYS.",
+"GRAZIE PER": "THANK YOU FOR",
+"LA PAZIENZA.": "YOUR PATIENCE.",
+"Il primo appuntamento libero è tra tre settimane.": "The first available appointment is three weeks away.",
+"Fantastico.": "Great.",
+"BOZZO POLSO": "WRIST LUMP",
+"CISTI SEBACEA": "SEBACEOUS CYST",
+"PUNTURA RAGNO": "SPIDER BITE",
+"UOVA SOTTOPELLE": "EGGS UNDER SKIN",
+"NON TOCCARLO": "DON'T TOUCH IT",
+"LUI TI SENTE": "IT CAN HEAR YOU",
+"Scorri i risultati.": "You scroll through the results.",
+"Gli ultimi due non hanno un sito. Non hanno un link. Solo testo rosso.": "The last two have no website. No link. Just red text.",
+"Chiudi il telefono.": "You put the phone away.",
+"Ci metti sopra un cerotto. Occhio non vede, cuore non duole.": "You put a band-aid over it. Out of sight, out of mind.",
+"Il cerotto si solleva. Si abbassa. Si solleva.": "The band-aid rises. Falls. Rises.",
+"Come se respirasse.": "As if it were breathing.",
+"La giornata passa lenta. Il polso è caldo.": "The day drags on. Your wrist feels warm.",
+"Poi, la sera, il bozzo si apre.": "Then, in the evening, the lump opens.",
+"È un occhio.": "It's an eye.",
+"Ti sta guardando.": "It's looking at you.",
+"Urlare": "Scream",
+"Restare immobile": "Stay still",
+"Salutarlo": "Say hi",
+"Urli. L'occhio si chiude di scatto.": "You scream. The eye snaps shut.",
+"Sembra spaventato. ...Spaventato?": "It looks scared. ...Scared?",
+"Restate immobili. Vi fissate per un minuto intero.": "You both freeze. You stare at each other for a whole minute.",
+"Sbatte la palpebra. Una volta. Due volte.": "It blinks. Once. Twice.",
+"Ti accorgi di aver fatto lo stesso. Nello stesso istante.": "You realize you did the same. At the exact same moment.",
+"...Ciao?": "...Hi?",
+"L'occhio si stringe. Sembra un sorriso.": "The eye narrows. It looks like a smile.",
+"Non riesci a dormire. Qualcosa, sotto la pelle, si gira e si rigira.": "You can't sleep. Something under your skin keeps turning and turning.",
+"Giorno 3. Ti sveglia una vocina.": "Day 3. A tiny voice wakes you up.",
+"...ciao.": "...hi.",
+"CIAO! Ciao ciao ciao!": "HI! Hi hi hi!",
+"Tu sei {P}. Lo so. Me l'hai detto tu, all'inizio. Ricordi?": "You're {P}. I know. You told me yourself, at the beginning. Remember?",
+"L'ultima volta mi hai dato un dito. Era buonissimo.": "Last time you gave me a finger. It was delicious.",
+"L'ultima volta mi hai detto di no. Me lo sono preso lo stesso.": "Last time you said no. I took it anyway.",
+"L'ultima volta hai preso il coltello. Non l'ho dimenticato.": "Last time you picked up the knife. I haven't forgotten.",
+"L'ultima volta la tua mano era mia. Un po' lo è ancora.": "Last time your hand was mine. It still is, a little.",
+"L'ultima volta ti ho mangiato tutto. Non te lo ricordi?": "Last time I ate all of you. Don't you remember?",
+"L'ultima volta siamo diventati una cosa sola.": "Last time we became one.",
+"L'ultima volta siamo diventati una porta, insieme. Era bellissimo.": "Last time we became a door, together. It was beautiful.",
+"L'ultima volta mi hai chiesto di andarmene. E io l'ho fatto. Ma sono tornato.": "Last time you asked me to leave. And I did. But I came back.",
+"L'ultima volta mi hai strappato via. Mi hai fatto tanto male.": "Last time you tore me out. You hurt me so much.",
+"L'ultima volta ti ho mangiato tutto. Fino all'ultimo osso.": "Last time I ate all of you. Down to the last bone.",
+"L'ultima volta mi hai dato a tua sorella. Lei ti saluta.": "Last time you gave me to your sister. She says hi.",
+"L'ultima volta mi hai guardato. Davvero. Ti sto guardando anche adesso.": "Last time you looked at me. Really looked. I'm looking at you right now, too.",
+"Sul tuo polso c'è una... cosa. Piccola. Rotonda. Con dei capelli viola.": "On your wrist there's a... thing. Small. Round. With purple hair.",
+"È carina. È orribile. È tutte e due le cose.": "It's cute. It's horrible. It's both.",
+"Ho fame. Tu hai fame? Io ho tantissima fame.": "I'm hungry. Are you hungry? I'm sooo hungry.",
+"Toglierlo con le pinzette": "Pull it out with tweezers",
+"Dargli da mangiare": "Feed it",
+"Prendi le pinzette dal bagno.": "You grab the tweezers from the bathroom.",
+"Cosa fai? Cosa sono quelle?": "What are you doing? What are those?",
+"PINZETTE": "TWEEZERS",
+"Lo afferri. Tiri.": "You grab it. You pull.",
+"Il braccio intero si tende come un filo. È attaccato a qualcosa di MOLTO profondo.": "Your whole arm goes taut like a string. It's attached to something VERY deep.",
+"AHIA! AHIA AHIA AHIA!": "OW! OW OW OW!",
+"...perché mi fai male?": "...why are you hurting me?",
+"Le pinzette scivolano. Ti tagli la pelle.": "The tweezers slip. You cut your skin.",
+"Hihi. Che buffo che sei.": "Hehe. You're so funny.",
+"Non farlo più, va bene? Io voglio solo... mangiare.": "Don't do that again, okay? I just want to... eat.",
+"In cucina trovi dei biscotti. Gliene porgi un pezzetto.": "In the kitchen you find some cookies. You hold out a small piece.",
+"BUONO! Buonissimo!": "YUMMY! Sooo yummy!",
+"Sei gentile. Sei la persona più gentile del mondo.": "You're kind. You're the kindest person in the whole world.",
+"...È caduto. Fa niente. Ci riproveremo. Abbiamo tanto tempo.": "...It fell. That's okay. We'll try again. We have lots of time.",
+"Io non ho un nome. Me ne dai uno?": "I don't have a name. Will you give me one?",
+"\"Amico\"": "\"Buddy\"",
+"\"Puntino\"": "\"Dot\"",
+"\"Cosa\"": "\"Thing\"",
+"Amico... AMICO! Mi piace! Allora siamo amici!": "Buddy... BUDDY! I love it! So we're buddies!",
+"Puntino. Perché ero piccolo piccolo. Ma crescerò, sai?": "Dot. Because I was teeny tiny. But I'll grow, you know?",
+"...Cosa.": "...Thing.",
+"Va bene. Mi ricorderò che mi hai chiamato così.": "Okay. I'll remember that you called me that.",
+"Quella notte, al buio, una voce sottile.": "That night, in the dark, a thin little voice.",
+"Ehi. Ci sei?": "Hey. Are you there?",
+"Possiamo essere amici per davvero? Io non ho nessuno. Ho solo te.": "Can we be friends for real? I don't have anyone. I only have you.",
+"Sì": "Yes",
+"Evviva. Allora non mi lascerai mai.": "Yay. Then you'll never leave me.",
+"Il silenzio vuol dire sì. Lo so. Sento quello che pensi.": "Silence means yes. I know. I can hear what you think.",
+"Promesso, {P}?": "Promise, {P}?",
+"Non era una domanda.": "It wasn't a question.",
+"FINE CAPITOLO 1": "END OF CHAPTER 1",
+"LE TUE SCELTE SONO STATE RICORDATE.": "YOUR CHOICES HAVE BEEN REMEMBERED.",
+"Al lavoro: tocca quando il cursore bianco è nella zona verde.": "At work: tap when the white cursor is inside the green zone.",
+"LAVORO": "WORK",
+"Giornata perfetta. Il capo ti fa un cenno.": "Perfect day. Your boss gives you a nod.",
+"Giornata disastrosa. Nessuno ti guarda in faccia.": "Disastrous day. Nobody looks you in the eye.",
+"Una giornata come le altre.": "A day like any other.",
+"CAPITOLO 2": "CHAPTER 2",
+"Mentre non c'eri, ho avuto tanta fame.": "While you were gone, I got really hungry.",
+"Ma adesso sei qui. Tornano sempre tutti.": "But you're here now. Everyone always comes back.",
+"Buongiorno, {P}! Stanotte ho dormito un po' dentro di te. Era caldissimo.": "Good morning, {P}! Last night I slept a little bit inside you. It was so warm.",
+"Oggi voglio qualcosa di DOLCE. Me lo prendi? Per favore per favore per favore.": "Today I want something SWEET. Will you get it for me? Please please please.",
+"Mi guardi da un telefono. Mi porti sempre in tasca... o sono io che porto te?": "You're watching me from a phone. You always carry me in your pocket... or am I the one carrying you?",
+"Mi guardi da un computer. Uno schermo grande. Così ti vedo meglio anche io.": "You're watching me from a computer. A big screen. So I can see you better too.",
+"Ogni giorno hai 3 azioni: LAVORA per i soldi, FAI LA SPESA, ACCAREZZA {N}.": "Every day you have 3 actions: WORK for money, GO SHOPPING, PET {N}.",
+"NUTRI, PARLA e SPECCHIO non costano azioni. Se {N} ha troppa fame... mangerà qualcos'altro.": "FEED, TALK and MIRROR don't cost actions. If {N} gets too hungry... it'll eat something else.",
+"{N} è cresciuto. Ora ha dei dentini.": "{N} has grown. Now it has tiny teeth.",
+"Intorno, le vene sono diventate scure. Rosse e blu, come una mappa.": "All around it, the veins have gone dark. Red and blue, like a map.",
+"Il dolce non mi basta più.": "Sweets aren't enough anymore.",
+"Voglio CARNE. Cruda. Rossa. Piena di succo.": "I want MEAT. Raw. Red. Full of juice.",
+"Il telefono squilla. È Giulia, tua sorella.": "The phone rings. It's Giulia, your sister.",
+"Rispondere": "Answer",
+"Ignorare": "Ignore it",
+"Ehi! Sparisci per giorni e non scrivi? Tutto ok?": "Hey! You vanish for days and don't text? Everything okay?",
+"Dirle la verità": "Tell her the truth",
+"Mentire": "Lie",
+"Giulia... c'è una cosa sul mio braccio. Una cosa viva.": "Giulia... there's something on my arm. Something alive.",
+"...Cosa? Che vuol dire \"viva\"?": "...What? What do you mean, \"alive\"?",
+"Ok. Domani passo da te. Non fare niente di stupido.": "Okay. I'll come by tomorrow. Don't do anything stupid.",
+"PERCHÉ LE HAI PARLATO DI ME?": "WHY DID YOU TELL HER ABOUT ME?",
+"Lei non capisce. Lei vorrà separarci.": "She doesn't understand. She'll want to separate us.",
+"Tutto bene. Solo un po' di stress al lavoro.": "All good. Just a bit of stress at work.",
+"Mh. Se lo dici tu. Ti voglio bene, eh.": "Mm. If you say so. Love you, okay?",
+"Bene così. Lei non capirebbe.": "Good. She wouldn't understand.",
+"E poi io ti voglio più bene di lei.": "And anyway, I love you more than she does.",
+"Chi era? ...Non importa.": "Who was that? ...Doesn't matter.",
+"Adesso ci sono io.": "You have me now.",
+"La carne era fredda. Era già morta.": "The meat was cold. It was already dead.",
+"Voglio qualcosa che si MUOVE. Qualcosa di vivo.": "I want something that MOVES. Something alive.",
+"Al negozio hanno i pesciolini rossi. Li ho visti. Con i tuoi occhi.": "The store has little goldfish. I saw them. With your eyes.",
+"Anche tu ti stai scaricando, {P}.": "You're running low too, {P}.",
+"Bene. Ne avremo bisogno, stanotte.": "Good. We'll need it tonight.",
+"Bussano alla porta. TOC. TOC. TOC.": "Someone knocks at the door. KNOCK. KNOCK. KNOCK.",
+"Sono io. Apri. Fammi vedere quel braccio.": "It's me. Open up. Show me that arm.",
+"Mostrarle il polso": "Show her your wrist",
+"Mandarla via": "Send her away",
+"Tiri su la manica.": "You roll up your sleeve.",
+"Oddio. Oddio oddio oddio.": "Oh my God. Oh my God oh my God.",
+"Andiamo in ospedale. ADESSO.": "We're going to the hospital. NOW.",
+"Il tuo braccio si muove da solo. Spinge Giulia. Forte.": "Your arm moves on its own. It shoves Giulia. Hard.",
+"Lei cade a terra. Ti guarda come si guarda uno sconosciuto.": "She falls to the floor. She looks at you like you're a stranger.",
+"...Tu non sei più tu.": "...You're not you anymore.",
+"Se ne va. La porta sbatte.": "She leaves. The door slams.",
+"Sto bene. Vattene, per favore.": "I'm fine. Please, just go.",
+"...Va bene. Ma se domani non rispondi al telefono, chiamo qualcuno.": "...Fine. But if you don't answer your phone tomorrow, I'm calling someone.",
+"I suoi passi si allontanano per le scale.": "Her footsteps fade down the stairs.",
+"Ti svegli. Non ricordi niente della notte.": "You wake up. You don't remember anything about the night.",
+"{N} ora è grande quanto un pugno.": "{N} is now as big as a fist.",
+"Ha tre occhi. Non ricordi quando è spuntato il terzo.": "It has three eyes. You don't remember when the third one appeared.",
+"{N} non parla. Ti guarda e basta.": "{N} doesn't speak. It just watches you.",
+"PERCHE' NON": "WHY AREN'T",
+"RISPONDI?": "YOU ANSWERING?",
+"STO VENENDO": "I'M COMING",
+"DA TE.": "OVER.",
+"NON SONO SOLA.": "I'M NOT ALONE.",
+"Un messaggio di Giulia. Poi il telefono si spegne da solo.": "A message from Giulia. Then the phone turns itself off.",
+"Dove vai quando lo schermo si spegne, {P}?": "Where do you go when the screen turns off, {P}?",
+"Io resto qui. Al buio. Ad aspettare.": "I stay here. In the dark. Waiting.",
+"Tranne noi due.": "Except the two of us.",
+"Sei a pezzi. È ora di dormire.": "You're exhausted. Time to sleep.",
+"{N} non ha voglia di parlare, adesso.": "{N} doesn't feel like talking right now.",
+"Meglio non guardarsi di nuovo. Non oggi.": "Better not look again. Not today.",
+"Torna a casa. Mi annoio. Torna a casa. Torna a casa.": "Come home. I'm bored. Come home. Come home.",
+"Il polso ti fa male per tutto il giorno.": "Your wrist hurts all day long.",
+"Il supermercato sotto casa. Luci al neon. Musichetta allegra.": "The supermarket downstairs. Neon lights. Cheerful music.",
+"ESCI": "LEAVE",
+"Non hai abbastanza soldi.": "You don't have enough money.",
+"Il pesciolino nuota in cerchio nel sacchetto. Ti guarda.": "The goldfish swims in circles in the bag. It's looking at you.",
+"DOLCE! Sei il migliore. Il migliore migliore migliore.": "SWEET! You're the best. The best best best.",
+"Mmmh. Sapeva di ferro. Sapeva un po' di... te.": "Mmmh. It tasted like iron. It tasted a little like... you.",
+"Si muoveva! Mi è piaciuto tanto quando ha smesso.": "It was moving! I really liked it when it stopped.",
+"Sa di te. Sa di casa. Ancora. ANCORA.": "It tastes like you. It tastes like home. More. MORE.",
+"Non hai niente da dargli. Prima fai la spesa.": "You have nothing to give it. Go shopping first.",
+"Cosa gli dai?": "What do you give it?",
+"INDIETRO": "BACK",
+"Ti pungi il polpastrello con un ago. Lo appoggi sulla sua bocca.": "You prick your fingertip with a needle. You press it to its mouth.",
+"Succhia. Forte. Più forte di quanto pensassi.": "It sucks. Hard. Harder than you expected.",
+"Tieni il pesciolino tra le dita. Si dibatte.": "You hold the goldfish between your fingers. It wriggles.",
+"Il cibo cade a terra.": "The food falls on the floor.",
+"Che spreco. Che. Spreco.": "What a waste. What. A. Waste.",
+"Il pesciolino smette di muoversi a metà.": "The goldfish stops moving halfway down.",
+"Questo? Non è quello che ti ho chiesto.": "This? This isn't what I asked for.",
+"Gnam gnam.": "Nom nom.",
+"Hihi! Fa il solletico!": "Hehe! That tickles!",
+"È caldo. Troppo caldo. E ti piace.": "It's warm. Too warm. And you like it.",
+"Non dovrebbe piacerti.": "You shouldn't like it.",
+"Già finito? Ancora un pochino...": "Done already? Just a little more...",
+"Da dove vieni?": "Where do you come from?",
+"Da su. Molto su. Faceva tanto freddo.": "From up there. Way up. It was so cold.",
+"Poi sono caduto. E ho trovato te. Tu sei caldo.": "Then I fell. And I found you. You're warm.",
+"Ce ne sono altri come te?": "Are there others like you?",
+"Tanti. Dormono. Aspettano.": "Lots. They're sleeping. Waiting.",
+"Aspettano qualcuno gentile come te. Tu sei gentile, vero?": "Waiting for someone kind like you. You are kind, aren't you?",
+"Cosa vuoi da me?": "What do you want from me?",
+"Voglio stare con te. Dentro di te. Per sempre.": "I want to be with you. Inside you. Forever.",
+"È una cosa bella, sai? Le persone la chiamano amore.": "It's a beautiful thing, you know? People call it love.",
+"C'era qualcuno prima di me?": "Was there someone before me?",
+"Sì. Si chiamava Marco. Era buono.": "Yes. Their name was Marco. They were nice.",
+"Era buonissimo.": "They were delicious.",
+"Perché parli con la mia bocca?": "Why are you talking with my mouth?",
+"Perché la tua bocca è anche mia, adesso.": "Because your mouth is mine too, now.",
+"Tutto quello che è tuo è anche mio. È questo, essere amici.": "Everything that's yours is mine too. That's what being friends means.",
+"Cosa succederà?": "What's going to happen?",
+"Domani notte il cielo cade.": "Tomorrow night the sky falls.",
+"Devi essere pronto. ...Pronta. Pronto. Non importa più.": "You have to be ready. ...Whoever you are. It doesn't matter anymore.",
+"Sì. Eri tu, {P}. L'altra volta.": "Yes. It was you, {P}. Last time.",
+"Non ti ricordi? Io sì.": "Don't you remember? I do.",
+"Ti guardi allo specchio. Occhiaie. Pelle grigia.": "You look in the mirror. Dark circles. Gray skin.",
+"Hai un aspetto orribile.": "You look awful.",
+"Il tuo riflesso sbatte le palpebre un attimo dopo di te.": "Your reflection blinks a moment after you.",
+"Riprovi. Ora è perfetto. Troppo perfetto.": "You try again. Now it's perfect. Too perfect.",
+"Il riflesso sorride.": "The reflection smiles.",
+"Tu no.": "You don't.",
+"Sulla spalla del riflesso c'è {N}. Enorme.": "On your reflection's shoulder there's {N}. Huge.",
+"Ti saluta. Con una mano. Non gli hai mai visto delle mani.": "It waves at you. With a hand. You've never seen it with hands.",
+"Sul vetro appannato qualcuno ha scritto con il dito:": "On the fogged-up glass, someone has written with a finger:",
+"Non leggere quella roba, {P}. Sono bugie.": "Don't read that stuff, {P}. It's all lies.",
+"Notte.": "Night.",
+"Me lo avevi promesso. Non mi hai portato niente.": "You promised me. You didn't bring me anything.",
+"Nel sonno senti qualcosa muoversi. Su per il braccio. Verso la spalla.": "In your sleep you feel something moving. Up your arm. Toward your shoulder.",
+"Al mattino, il lenzuolo è macchiato di rosso.": "In the morning, the sheet is stained red.",
+"Buonanotte. Ti voglio bene.": "Good night. I love you.",
+"Dormi male. Ma dormi.": "You sleep badly. But you sleep.",
+"Notte. Il settimo giorno finisce.": "Night. The seventh day ends.",
+"Fuori, in strada, una macchina si ferma. Poi riparte. Nessuno sale le scale.": "Outside, in the street, a car stops. Then drives off. Nobody comes up the stairs.",
+"Ho fame.": "I'm hungry.",
+"Ho sempre fame. Lo sai, vero?": "I'm always hungry. You know that, right?",
+"Il dolce era poco. La carne era fredda. Il pesce era piccolo.": "The sweets were too little. The meat was cold. The fish was small.",
+"Tu invece sei caldo. E sei tanto.": "But you're warm. And there's so much of you.",
+"Dammi un dito, {P}. Solo uno.": "Give me a finger, {P}. Just one.",
+"Ne hai dieci. Non te ne accorgerai nemmeno.": "You have ten. You won't even notice.",
+"Darglielo": "Give it",
+"Rifiutare": "Refuse",
+"Prendere il coltello": "Grab the knife",
+"...Va bene.": "...Okay.",
+"Lo sapevo. Sei il mio migliore amico.": "I knew it. You're my best friend.",
+"Non fa male quanto pensavi.": "It doesn't hurt as much as you thought.",
+"Anzi. Non fa male per niente.": "Actually. It doesn't hurt at all.",
+"Ed è proprio questo che ti spaventa.": "And that's exactly what scares you.",
+"No. Basta.": "No. Enough.",
+"Va bene.": "Okay.",
+"Va bene va bene va bene va bene.": "Okay okay okay okay.",
+"Ti addormenti senza accorgertene.": "You fall asleep without noticing.",
+"Alle 3:33 ti svegli. La mano sinistra è bagnata.": "At 3:33 you wake up. Your left hand is wet.",
+"Me lo sono preso da solo. Non arrabbiarti.": "I took it myself. Don't be mad.",
+"L'ho fatto per te. Tu non volevi scegliere, vero?": "I did it for you. You didn't want to choose, did you?",
+"Il coltello della cucina è freddo. La tua mano trema.": "The kitchen knife is cold. Your hand is shaking.",
+"Cosa vuoi fare con quello?": "What are you going to do with that?",
+"COLTELLO": "KNIFE",
+"Affondi la lama alla base di {N}. Urla. Urli anche tu.": "You sink the blade into the base of {N}. It screams. You scream too.",
+"Poi il taglio si richiude da solo. In un attimo.": "Then the cut closes up on its own. In an instant.",
+"Come se la tua carne fosse sua.": "As if your flesh were its own.",
+"NON. FARLO. MAI. PIÙ.": "DON'T. EVER. DO. THAT. AGAIN.",
+"...Ti perdono. Perché siamo amici.": "...I forgive you. Because we're friends.",
+"La lama si ferma a un centimetro dalla pelle.": "The blade stops a centimeter from your skin.",
+"Non l'hai fermata tu.": "You weren't the one who stopped it.",
+"Questa mano ormai è anche mia.": "This hand is mine too, now.",
+"E allora... me lo prendo.": "So... I'll just take it.",
+"E migliaia di puntini neri. Sui polsi di migliaia di persone.": "And thousands of black dots. On the wrists of thousands of people.",
+"Ti stanno guardando tutti.": "They're all looking at you.",
+"FINE CAPITOLO 2": "END OF CHAPTER 2",
+"Il tuo corpo è diventato troppo piccolo per due.": "Your body has become too small for two.",
+"Grazie per il pasto, {P}. Sapevi di casa.": "Thanks for the meal, {P}. You tasted like home.",
+"Non sai più dove finisci tu e dove comincia {N}.": "You no longer know where you end and {N} begins.",
+"Shh. Adesso siamo una cosa sola.": "Shh. Now we are one.",
+"FINE": "THE END",
+"FINALE: IL PASTO": "ENDING: THE MEAL",
+"FINALE: UNA COSA SOLA": "ENDING: ONE AND THE SAME",
+"TORNA AL TITOLO": "BACK TO TITLE",
+"RESISTI!": "RESIST!",
+"TOCCA IL PIU' VELOCE POSSIBILE": "TAP AS FAST AS YOU CAN",
+"Dormi a lungo. Quando ti svegli, le ferite si sono chiuse.": "You sleep for a long time. When you wake up, the wounds have closed.",
+"Ti ho riparato io, {P}. Mi servi intero.": "I fixed you, {P}. I need you in one piece.",
+"CAPITOLO 3": "CHAPTER 3",
+"LA VOCE": "THE VOICE",
+"{N} adesso ti arriva quasi al gomito. Le sue radici salgono verso la spalla.": "{N} now reaches almost to your elbow. Its roots are climbing toward your shoulder.",
+"Il tuo dito era buonissimo. Lo sento ancora, qui dentro.": "Your finger was delicious. I can still feel it, in here.",
+"Ti lavi i denti. Apri la bocca per sputare.": "You brush your teeth. You open your mouth to spit.",
+"Buongiorno, {P}.": "Good morning, {P}.",
+"Non l'hai detto tu. Ma era la tua voce.": "You didn't say that. But it was your voice.",
+"Adesso posso parlare anche con la tua bocca. Bello, vero?": "Now I can talk with your mouth too. Isn't that nice?",
+"Oggi voglio il tuo SANGUE. Solo un pochino. Solo il tuo.": "Today I want your BLOOD. Just a little. Only yours.",
+"NUOVO: in NUTRI puoi dargli il tuo sangue. Costa salute, ma lo sazia molto.": "NEW: in FEED you can give it your blood. It costs health, but fills it up a lot.",
+"TOC. TOC. TOC.": "KNOCK. KNOCK. KNOCK.",
+"Sono io. Ho portato qualcuno. Ti prego, apri.": "It's me. I brought someone. Please, open up.",
+"Sono io. Non rispondi da giorni. Ho portato una dottoressa.": "It's me. You haven't answered in days. I brought a doctor.",
+"Sono Giulia! Non ti fai sentire da una settimana. Mamma è in ansia. Apri!": "It's Giulia! You haven't called in a week. Mom is worried sick. Open up!",
+"Apri. Non è sola.": "You open. She's not alone.",
+"Con lei c'è una donna con un camice sotto il cappotto.": "With her is a woman with a lab coat under her overcoat.",
+"Dottoressa Ferri. Non ti farò del male. Ho già visto... casi simili.": "Dr. Ferri. I won't hurt you. I've seen... similar cases before.",
+"(Lei mente. Ne ha già tagliati tanti come me. Li tiene nei barattoli.)": "(She's lying. She's already cut out lots like me. She keeps them in jars.)",
+"Lasciarti visitare": "Let her examine you",
+"Cacciarle via": "Throw them out",
+"Bene. Adesso guardo il polso. Tieni ferma la mano.": "Good. Now I'll look at the wrist. Keep your hand still.",
+"Oddio... è cresciuto ancora.": "Oh God... it's grown even more.",
+"NON. TOCCARMI.": "DON'T. TOUCH. ME.",
+"Il braccio si alza da solo. Verso la gola della dottoressa.": "Your arm rises on its own. Toward the doctor's throat.",
+"TIENI GIU' IL BRACCIO!": "HOLD YOUR ARM DOWN!",
+"Tieni giù il braccio con tutte le tue forze. Trema. Urla. Ma resta giù.": "You hold your arm down with all your strength. It shakes. It screams. But it stays down.",
+"Giulia, la siringa! ADESSO!": "Giulia, the syringe! NOW!",
+"Un ago nel collo. Il mondo diventa morbido. Poi niente.": "A needle in your neck. The world goes soft. Then nothing.",
+"Il braccio scatta. Un tentacolo viola frusta la faccia della dottoressa.": "Your arm lashes out. A purple tentacle whips across the doctor's face.",
+"Andiamo via! ANDIAMO VIA!": "Let's go! LET'S GO!",
+"Scappano. Sul pavimento resta una goccia di sangue. Non è tuo.": "They run. A drop of blood is left on the floor. It's not yours.",
+"Buonissima.": "Delicious.",
+"Andate via. Sto bene.": "Go away. I'm fine.",
+"Non stai bene. Hai la voce strana. Hai gli occhi strani.": "You're not fine. Your voice is strange. Your eyes are strange.",
+"Questo è il mio numero. Quando sarà troppo tardi... chiamami lo stesso.": "This is my number. When it's too late... call me anyway.",
+"Giulia... lui è {N}.": "Giulia... this is {N}.",
+"Ciao Giulia! Ho sentito tanto parlare di te. Anche di quando eravate piccoli.": "Hi Giulia! I've heard so much about you. Even about when you two were little.",
+"...Parla. PARLA.": "...It talks. IT TALKS.",
+"È senziente. Incredibile. Posso... posso studiarlo?": "It's sentient. Incredible. Can I... can I study it?",
+"Lei mi piace. Ha un buon odore.": "I like her. She smells nice.",
+"Io... io me ne vado. Chiamami se torni in te.": "I... I'm leaving. Call me when you're yourself again.",
+"La dottoressa ti lascia il suo numero. Ti guarda il polso come si guarda un regalo.": "The doctor leaves you her number. She looks at your wrist like it's a present.",
+"Notte. Ti svegli: la tua mano sta scrivendo sul telefono.": "Night. You wake up: your hand is typing on your phone.",
+"A: GIULIA": "TO: GIULIA",
+"NON VENIRE.": "DON'T COME.",
+"STO BENE.": "I'M FINE.",
+"NON VENIRE": "DON'T COME",
+"MAI PIU'.": "EVER AGAIN.",
+"Shhh. Torna a dormire. Ci penso io.": "Shhh. Go back to sleep. I'll take care of it.",
+"FERMA LA MANO!": "STOP YOUR HAND!",
+"MESSAGGIO": "MESSAGE",
+"NON INVIATO.": "NOT SENT.",
+"CHI SEI?": "WHO ARE YOU?",
+"TU NON SCRIVI": "YOU DON'T WRITE",
+"COSI'.": "LIKE THAT.",
+"DOMANI VENGO.": "COMING TOMORROW",
+"Lanci il telefono contro il muro. Il messaggio non parte.": "You throw the phone against the wall. The message doesn't go through.",
+"Il messaggio è partito. La risposta arriva subito.": "The message went through. The reply comes right away.",
+"Giorno 10.": "Day 10.",
+"Stanotte il cielo cade, {P}.": "Tonight the sky falls, {P}.",
+"Molto tempo fa, la Madre ha lanciato i semi. Noi.": "A long time ago, the Mother scattered the seeds. Us.",
+"Ogni seme trova un ospite caldo. E cresce. E aspetta.": "Every seed finds a warm host. And grows. And waits.",
+"Quando il cielo cade, la Madre guarda giù. E ogni ospite diventa una porta.": "When the sky falls, the Mother looks down. And every host becomes a door.",
+"Cosa succede a me?": "What happens to me?",
+"Perché proprio io?": "Why me?",
+"Non avrai più paura. Mai più.": "You won't be afraid anymore. Never again.",
+"Non avrai più niente, a dire il vero. Ma non avrai paura.": "You won't have anything anymore, to be honest. But you won't be afraid.",
+"Perché mi hai salutato. Nessuno mi aveva mai salutato.": "Because you said hi to me. Nobody had ever said hi to me.",
+"Perché hai urlato. E poi sei rimasto. Restano sempre.": "Because you screamed. And then you stayed. They always stay.",
+"Perché il primo giorno non mi hai schiacciato. Mi hai guardato.": "Because on the first day you didn't squash me. You looked at me.",
+"Stanotte andiamo all'osservatorio sulla collina. Gli altri ci aspettano.": "Tonight we're going to the observatory on the hill. The others are waiting for us.",
+"Hai tempo per un'ultima cosa prima di uscire.": "You have time for one last thing before you go out.",
+"Accarezzarlo un'ultima volta": "Pet it one last time",
+"Scrivere a Giulia": "Text Giulia",
+"Lo infili nella tasca del giubbotto. È freddo. È tuo.": "You slip it into your jacket pocket. It's cold. It's yours.",
+"Lo so cosa hai in tasca.": "I know what's in your pocket.",
+"Ti ricorderai di me, vero? Anche dopo?": "You'll remember me, right? Even after?",
+"Ti morde. Piano. Come un bacio.": "It bites you. Gently. Like a kiss.",
+"OSSERVATORIO.": "OBSERVATORY.",
+"STANOTTE.": "TONIGHT.",
+"PERDONAMI.": "FORGIVE ME.",
+"Premi invio prima che lui se ne accorga.": "You hit send before it notices.",
+"Esci di casa. Non chiudi la porta. Non tornerai.": "You leave the house. You don't close the door. You won't be coming back.",
+"FINE CAPITOLO 3": "END OF CHAPTER 3",
+"CAPITOLO 4": "CHAPTER 4",
+"IL NIDO": "THE NEST",
+"Sei in un letto d'ospedale. Il braccio è legato con cinghie di cuoio.": "You're in a hospital bed. Your arm is tied down with leather straps.",
+"Ti abbiamo sedato. Anche lui dorme. Per ora.": "We sedated you. It's asleep too. For now.",
+"Domattina alle sette lo rimuoviamo. Chirurgicamente.": "Tomorrow morning at seven we remove it. Surgically.",
+"Non ti nascondo niente: le radici arrivano vicino al cuore.": "I won't hide anything from you: the roots reach close to your heart.",
+"Io resto qui. Tutta la notte. Non ti lascio.": "I'm staying here. All night. I won't leave you.",
+"Notte. Giulia si è addormentata sulla sedia.": "Night. Giulia has fallen asleep in the chair.",
+"...{P}. Ci sei?": "...{P}. Are you there?",
+"Se mi tagliano, io muoio. E forse muori anche tu.": "If they cut me, I die. And maybe you die too.",
+"Lì fuori, stanotte, il cielo cade. Gli altri mi aspettano. Portami da loro.": "Out there, tonight, the sky is falling. The others are waiting for me. Take me to them.",
+"Restare: domani l'operazione": "Stay: surgery tomorrow",
+"Scappare con lui": "Escape with it",
+"Allora resto qui con te. Fino alla fine. Come fanno gli amici.": "Then I'll stay here with you. Until the end. Like friends do.",
+"Allora ti terrò stretto. Molto, molto stretto.": "Then I'll hold on tight. Very, very tight.",
+"{N} morde le cinghie. Una. Due. Tre.": "{N} bites through the straps. One. Two. Three.",
+"Svegliare Giulia": "Wake Giulia",
+"Lasciarla dormire": "Let her sleep",
+"...Cosa fai? Dove vai?!": "...What are you doing? Where are you going?!",
+"Devo andare. Lui deve andare.": "I have to go. It has to go.",
+"...Allora vengo con te. Non ti lascio da sola. Da solo. Non ti lascio e basta.": "...Then I'm coming with you. I'm not leaving you alone. I'm just not leaving you.",
+"Le dai un bacio sulla fronte. Non si sveglia.": "You kiss her on the forehead. She doesn't wake up.",
+"Il corridoio. Le infermiere. Le telecamere.": "The hallway. The nurses. The cameras.",
+"NASCONDITI NEL MOMENTO GIUSTO": "HIDE AT THE RIGHT MOMENT",
+"Ti vedono. Corri. Una porta a vetri ti taglia la spalla.": "They see you. You run. A glass door slices your shoulder.",
+"Nessuno ti vede uscire.": "Nobody sees you leave.",
+"La notte. Fa freddo. Ma tu non senti il freddo.": "The night. It's cold. But you don't feel the cold.",
+"In tasca, il coltello della cucina.": "In your pocket, the kitchen knife.",
+"Il cielo è pieno di puntini neri. Cadono. Lentamente. Come neve al contrario.": "The sky is full of black dots. Falling. Slowly. Like snow in reverse.",
+"Per strada non sei solo. Altre persone camminano nella stessa direzione.": "You're not alone in the street. Other people are walking in the same direction.",
+"Tutte in pigiama. Tutte con un braccio stretto al petto.": "All in pajamas. All with one arm clutched to their chest.",
+"Lei è una di noi. Siamo tanti, {P}. Siamo tantissimi.": "She's one of us. There are so many of us, {P}. So, so many.",
+"Un uomo cade in ginocchio sul marciapiede. Il suo amico è grande come un cane.": "A man falls to his knees on the sidewalk. His friend is as big as a dog.",
+"Aiutarlo": "Help him",
+"Proseguire": "Keep walking",
+"Ti inginocchi. La creatura ti ringhia. L'uomo ti afferra la mano.": "You kneel down. The creature growls at you. The man grabs your hand.",
+"Sorride. \"È bellissimo,\" dice. Poi non dice più niente.": "He smiles. \"It's beautiful,\" he says. Then he doesn't say anything else.",
+"Bravo. Lui è quasi pronto. Non disturbarlo.": "Good. He's almost ready. Don't disturb him.",
+"STO ARRIVANDO.": "ON MY WAY.",
+"VEDO IL CIELO.": "I SEE THE SKY.",
+"COS'E'?": "WHAT IS IT?",
+"Il telefono vibra. Giulia sta venendo.": "Your phone buzzes. Giulia is coming.",
+"Chiamare la dottoressa Ferri": "Call Dr. Ferri",
+"Non chiamare nessuno": "Don't call anyone",
+"Pronto? ...L'osservatorio. Certo. Arrivo.": "Hello? ...The observatory. Of course. I'm coming.",
+"Ascoltami bene: non lasciarlo entrare del tutto. Hai capito? Mai del tutto.": "Listen carefully: don't let it all the way in. Understand? Never all the way.",
+"Traditore. Traditrice. Traditore.": "Traitor. Traitor. TRAITOR.",
+"La strada finisce all'osservatorio abbandonato sulla collina.": "The road ends at the abandoned observatory on the hill.",
+"La cupola è aperta. Dentro, le pareti respirano.": "The dome is open. Inside, the walls are breathing.",
+"Decine di persone in cerchio. Ognuna con il suo amico che guarda in alto.": "Dozens of people in a circle. Each with their friend looking up.",
+"Siamo arrivati, {P}. Questa è casa.": "We're here, {P}. This is home.",
+"Ti ho trovato... oddio. Cos'è questo posto?": "I found you... oh God. What is this place?",
+"Ciao, Giulia. Sei venuta anche tu. Che bello.": "Hi, Giulia. You came too. How nice.",
+"Sono qui. Ho portato questo.": "I'm here. I brought this.",
+"La dottoressa ti mette in mano un bisturi. Senza farsi vedere.": "The doctor slips a scalpel into your hand. Without anyone seeing.",
+"Il cielo si apre. Un occhio, grande come la luna, guarda giù.": "The sky opens. An eye, as big as the moon, looks down.",
+"È lei. La Madre.": "It's her. The Mother.",
+"FINE CAPITOLO 4": "END OF CHAPTER 4",
+"UNA COSA SOLA": "ONE AND THE SAME",
+"LA LAMA": "THE BLADE",
+"IL PASTO": "THE MEAL",
+"L'OSPITE": "THE HOST",
+"CAPITOLO 5": "CHAPTER 5",
+"IL CIELO CHE CADE": "THE FALLING SKY",
+"Tutti gli amici, nel cerchio, aprono la bocca. Cantano. Una nota sola.": "All the friends in the circle open their mouths. They sing. A single note.",
+"Ora tocca a noi, {P}.": "Now it's our turn, {P}.",
+"Devi solo lasciarmi entrare. Tutto. Fino in fondo. Fino al cuore.": "You just have to let me in. All of me. All the way. All the way to your heart.",
+"Lasciarlo entrare": "Let it in",
+"Strapparlo via": "Tear it out",
+"Chiedergli di lasciarti andare": "Ask it to let you go",
+"Darlo a Giulia": "Give it to Giulia",
+"Guardare oltre la Madre": "Look beyond the Mother",
+"Vorrei, {P}. Davvero.": "I wish I could, {P}. Really.",
+"Ma non so più dove finisci tu e dove comincio io.": "But I don't know anymore where you end and I begin.",
+"Smetti di resistere. È facile. È la cosa più facile che tu abbia mai fatto.": "You stop resisting. It's easy. It's the easiest thing you've ever done.",
+"Grazie, {P}.": "Thank you, {P}.",
+"Le tue costole si aprono come i petali di un fiore.": "Your ribs open like the petals of a flower.",
+"Ora vedi con tre occhi. Presto ne avrai altri.": "Now you see with three eyes. Soon you'll have more.",
+"Noi siamo {N}. Noi siamo {P}.": "We are {N}. We are {P}.",
+"Noi abbiamo fame.": "We are hungry.",
+"SEI DIVENTATO UNA PORTA.": "YOU HAVE BECOME A DOOR.",
+"LA MADRE PASSA ATTRAVERSO DI TE.": "THE MOTHER PASSES THROUGH YOU.",
+"NON HAI PIU' PAURA. NON HAI PIU' NIENTE.": "YOU'RE NOT AFRAID ANYMORE. YOU HAVE NOTHING ANYMORE.",
+"Stringi il bisturi della dottoressa.": "You grip the doctor's scalpel.",
+"Tiri fuori il coltello della cucina.": "You pull out the kitchen knife.",
+"No. No no no no. {P}. NO.": "No. No no no no. {P}. NO.",
+"NON LASCIARE LA LAMA!": "DON'T LET GO OF THE BLADE!",
+"La tua mano si apre da sola. La lama cade nel buio.": "Your hand opens on its own. The blade falls into the dark.",
+"Te l'avevo detto. Questa mano è mia.": "I told you. This hand is mine.",
+"TAGLIA LE RADICI": "CUT THE ROOTS",
+"Tagli male. Tagli troppo poco. Le radici si richiudono.": "You cut badly. You cut too little. The roots close back up.",
+"Basta giocare.": "Enough games.",
+"Tagli. Tiri. Urlate insieme.": "You cut. You pull. You both scream.",
+"Le radici escono come i fili di un maglione. Lunghissime. Calde.": "The roots come out like threads from a sweater. So long. So warm.",
+"Perché... eravamo amici...": "Why... we were friends...",
+"Si stacca. Lo getti nel cerchio. Si contorce, piccolo come il primo giorno.": "It comes off. You throw it into the circle. It writhes, as small as on the first day.",
+"Il tuo braccio sinistro non si muove più. Ma è tuo. Solo tuo.": "Your left arm doesn't move anymore. But it's yours. Only yours.",
+"L'occhio nel cielo si chiude. Non per tutti. Solo per te.": "The eye in the sky closes. Not for everyone. Just for you.",
+"SEI VIVO. SEI LIBERO. HAI UN BRACCIO IN MENO.": "YOU'RE ALIVE. YOU'RE FREE. YOU HAVE ONE ARM LESS.",
+"INTORNO A TE, IL CERCHIO CONTINUA A CANTARE.": "AROUND YOU, THE CIRCLE KEEPS SINGING.",
+"OGNI TANTO, IL POLSO TI PRUDE ANCORA.": "EVERY NOW AND THEN, YOUR WRIST STILL ITCHES.",
+"Se sei davvero mio amico... lasciami andare.": "If you're really my friend... let me go.",
+"Gli amici lasciano andare. L'ho letto nella tua testa. Tanto tempo fa.": "Friends let go. I read it in your head. A long time ago.",
+"Mi hai salutato.": "You said hi to me.",
+"Mi hai chiamato amico.": "You called me buddy.",
+"Mi hai dato un biscotto.": "You gave me a cookie.",
+"Mi hai accarezzato tanto.": "You petted me so much.",
+"Le radici si ritirano, una a una. Fa male. Fa un male bellissimo.": "The roots pull back, one by one. It hurts. It hurts beautifully.",
+"Ciao, {P}. Grazie del biscotto.": "Bye, {P}. Thanks for the cookie.",
+"{N} si stacca e sale verso l'occhio. Piccolo. Sempre più piccolo.": "{N} comes loose and rises toward the eye. Small. Smaller and smaller.",
+"Poi diventa un puntino. E sparisce.": "Then it becomes a dot. And disappears.",
+"Sul tuo polso resta una cicatrice rotonda. Quando la tocchi, è ancora tiepida.": "A round scar is left on your wrist. When you touch it, it's still warm.",
+"TI HA LASCIATO ANDARE.": "IT LET YOU GO.",
+"E' IL FINALE PIU' RARO.": "IT'S THE RAREST ENDING.",
+"A VOLTE, DI NOTTE, TI SEMBRA DI SENTIRE \"CIAO\".": "SOMETIMES, AT NIGHT, YOU THINK YOU HEAR \"HI\".",
+"Prendi lei.": "Take her.",
+"Cosa...? Di cosa parli?": "What...? What are you talking about?",
+"...Lei?": "...Her?",
+"Lei è calda. Lei è nuova. Lei non sa niente.": "She's warm. She's new. She doesn't know anything.",
+"Un tentacolo si allunga, lento, verso il polso di Giulia.": "A tentacle stretches, slowly, toward Giulia's wrist.",
+"Un secondo dopo, il tuo braccio è leggero. Vuoto. Freddo.": "A second later, your arm is light. Empty. Cold.",
+"Cos'era...? Mi prude il polso.": "What was that...? My wrist itches.",
+"Giulia si gratta il polso. C'è un puntino nero. Piccolissimo.": "Giulia scratches her wrist. There's a black dot. Tiny.",
+"E poi, da lontano, una vocina che conosci bene:": "And then, from far away, a little voice you know well:",
+"...ciao, Giulia. Io sono il tuo amico.": "...hi, Giulia. I'm your friend.",
+"SEI LIBERO. LEI NO.": "YOU'RE FREE. SHE ISN'T.",
+"TRA SETTE GIORNI SARA' LEI A CHIEDERTI AIUTO.": "IN SEVEN DAYS SHE'LL BE THE ONE ASKING YOU FOR HELP.",
+"RISPONDERAI AL TELEFONO?": "WILL YOU ANSWER THE PHONE?",
+"Alzi gli occhi oltre la Madre. Oltre il cielo. Oltre lo schermo.": "You look beyond the Mother. Beyond the sky. Beyond the screen.",
+"Finalmente hai capito.": "You finally understand.",
+"Non parlavo con lui. Il personaggio. Quello col braccio.": "I wasn't talking to them. The character. The one with the arm.",
+"Parlavo con te, {P}. Con te che tieni in mano lo schermo.": "I was talking to you, {P}. You, holding the screen in your hand.",
+"Guarda il tuo polso, {P}. Quello vero.": "Look at your wrist, {P}. The real one.",
+"NON ERA IL PERSONAGGIO IL SUO OSPITE.": "THE CHARACTER WAS NEVER ITS HOST.",
+"ERI TU.": "IT WAS YOU.",
+"(QUEL PUNTINO SULLO SCHERMO NON SE NE VA.)": "(THAT DOT ON THE SCREEN ISN'T GOING AWAY.)",
+"Il sangue è troppo. Il mondo diventa piccolo, poi niente.": "Too much blood. The world gets small, then nothing.",
+"Scusa, {P}. Avevo tanta fame. E tu eri così vicino.": "Sorry, {P}. I was so hungry. And you were so close.",
+"NON E' RIMASTO NIENTE DI TE.": "NOTHING IS LEFT OF YOU.",
+"SOLO UN PUNTINO NERO, IN MEZZO AL CERCHIO.": "JUST A BLACK DOT, IN THE MIDDLE OF THE CIRCLE.",
+"CHE ASPETTA IL PROSSIMO OSPITE.": "WAITING FOR THE NEXT HOST.",
+"Sono le 7:00. Luci bianche. Mascherine. Odore di metallo.": "It's 7:00. White lights. Masks. The smell of metal.",
+"Iniziamo. Conta alla rovescia da dieci.": "Let's begin. Count backward from ten.",
+"Dieci... nove... otto...": "Ten... nine... eight...",
+"...sette...": "...seven...",
+"Ehi. Ci sei, {P}?": "Hey. Are you there, {P}?",
+"Non avere paura. Ho deciso io. Non mi devono tagliare.": "Don't be scared. I decided. They don't need to cut me.",
+"Gli amici lasciano andare.": "Friends let go.",
+"Ciao. Grazie del biscotto.": "Bye. Thanks for the cookie.",
+"...Non ci credo. Si è staccato da solo. Come se... se ne fosse andato.": "...I can't believe it. It came off on its own. As if... it just left.",
+"TI HA LASCIATO ANDARE, SUL TAVOLO OPERATORIO.": "IT LET YOU GO, ON THE OPERATING TABLE.",
+"NEL BARATTOLO DELLA DOTTORESSA, IL PUNTINO NON SI MUOVE PIU'.": "IN THE DOCTOR'S JAR, THE DOT DOESN'T MOVE ANYMORE.",
+"NO. NO. NO. NO. NO.": "NO. NO. NO. NO. NO.",
+"Ti svegli tre giorni dopo. Al posto del braccio sinistro, bende.": "You wake up three days later. Where your left arm was, bandages.",
+"Abbiamo tolto tutto. Credo.": "We removed everything. I think.",
+"Stanotte, all'osservatorio sulla collina, ne hanno trovati altri quaranta. Non sappiamo ancora cosa...": "Last night, at the observatory on the hill, they found forty more. We still don't know what...",
+"Il polso che non hai più ti prude.": "The wrist you no longer have is itching.",
+"SEI VIVO. HAI UN BRACCIO IN MENO.": "YOU'RE ALIVE. YOU HAVE ONE ARM LESS.",
+"FUORI DALLA FINESTRA, IL CIELO HA ANCORA DEI PUNTINI NERI.": "OUTSIDE THE WINDOW, THE SKY STILL HAS BLACK DOTS.",
+"Arresto cardiaco! Le radici sono nel cuore, non riesco a...": "Cardiac arrest! The roots are in the heart, I can't...",
+"UN ULTIMO FAVORE": "ONE LAST FAVOR",
+"QUALCUN ALTRO SI STA SVEGLIANDO": "SOMEONE ELSE IS WAKING UP",
+"CON UN PUNTINO SUL POLSO.": "WITH A DOT ON THEIR WRIST.",
+"Vuoi lasciare un messaggio sullo specchio per il prossimo ospite?": "Do you want to leave a message on the mirror for the next host?",
+"SCRIVI UN MESSAGGIO": "WRITE A MESSAGE",
+"NO": "NO",
+"MESSAGGIO (MAX 40 LETTERE)": "MESSAGE (MAX 40 LETTERS)",
+"Il vapore si posa sul vetro. Qualcuno lo leggerà.": "The steam settles on the glass. Someone will read it.",
+"LUI SI RICORDA DI TE.": "IT REMEMBERS YOU.",
+"NUOVA PARTITA": "NEW GAME",
+"CARICA DA CODICE": "LOAD FROM CODE",
+"CODICE OSPITE": "HOST CODE",
+"Nessun ospite con questo codice.": "No host with this code.",
+"Connessione assente. Riprova.": "No connection. Try again.",
+"SÌ, SONO IO": "YES, IT'S ME",
+"CAMBIA NOME": "CHANGE NAME",
+"COME TI CHIAMI?": "WHAT'S YOUR NAME?",
+"Scrivi un nome vero. Almeno 2 lettere.": "Write a real name. At least 2 letters.",
+"IL MIO AMICO": "MY FRIEND"
+};
+</script>
 <script>
 "use strict";
+/* ============ LINGUA / LANGUAGE ============ */
+const LKEY='ilmioamico_lang';
+let LANG=(()=>{try{const l=localStorage.getItem(LKEY);if(l==='it'||l==='en')return l}catch(e){}return /^it/i.test(navigator.language||'')?'it':'en'})();
+const L=(it,en)=>LANG==='en'?en:it;
+function tr(s){if(LANG!=='en'||typeof s!=='string')return s;const v=EN[s];return v===undefined?s:v}
+function applyLangDOM(){document.documentElement.lang=LANG;
+ document.getElementById('rotT').innerHTML=L('RUOTA IL TELEFONO<br>IN ORIZZONTALE','ROTATE YOUR PHONE<br>TO LANDSCAPE');
+ document.getElementById('fs').title=L('Schermo intero (F)','Fullscreen (F)');
+ if(!document.hidden)document.title=L('Il Mio Amico','Il Mio Amico (My Friend)')}
+function setLang(l){LANG=l;try{localStorage.setItem(LKEY,l)}catch(e){}applyLangDOM()}
+/* ============ PROTEZIONE PAGINA (deterrente) ============ */
+(()=>{const no=e=>{e.preventDefault();e.stopPropagation();return false};
+ document.addEventListener('contextmenu',no,{capture:true});
+ document.addEventListener('dragstart',no,{capture:true});
+ document.addEventListener('keydown',e=>{const k=(e.key||'').toUpperCase(),c=e.ctrlKey||e.metaKey;
+  if(k==='F12'||(c&&(e.shiftKey||e.altKey)&&['I','J','C','K'].includes(k))||(c&&['U','S','P'].includes(k)))return no(e)},{capture:true});
+ try{console.log('%cSTOP.','color:#c0306a;font:bold 48px monospace');console.log('%c'+(LANG==='en'?'He is watching you.':'Ti sta guardando.'),'color:#888;font:16px monospace')}catch(e){}})();
 /* ============ BASE ============ */
 const W=384,H=216;
 const cv=document.getElementById('c'),ctx=cv.getContext('2d');
@@ -117,10 +727,10 @@ const BAD=['CAZZ','MERD','STRONZ','PUTTAN','TROIA','FROCI','NEGR','FIGA','VAFFA'
 function clean(s,max,onlyLetters){s=norm(s||'').replace(onlyLetters?/[^A-Z' ]/g:/[^A-Z0-9 .,!?'\-:]/g,'').replace(/\s+/g,' ').trim().slice(0,max);if(BAD.some(b=>s.includes(b)))return'';return s}
 const hhmm=()=>{const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
 function timeLine(){const h=new Date().getHours(),t=hhmm();
- if(h<5)return['Sono le '+t+'. Perché non dormi, {P}?','...Neanche io dormo mai.'];
- if(h<12)return['Buongiorno, {P}. Sono le '+t+'.','Hai fatto colazione? Io sì. Grazie.'];
- if(h<18)return['Sono le '+t+'. Non dovresti essere da qualche altra parte?','Invece sei qui. Con me. Mi piace.'];
- return['Sono le '+t+'. Fuori è buio, vero?','Qui dentro è sempre buio. Ma si sta caldi.']}
+ if(h<5)return[L('Sono le '+t+'. Perché non dormi, {P}?','It\'s '+t+'. Why aren\'t you asleep, {P}?'),'...Neanche io dormo mai.'];
+ if(h<12)return[L('Buongiorno, {P}. Sono le '+t+'.','Good morning, {P}. It\'s '+t+'.'),'Hai fatto colazione? Io sì. Grazie.'];
+ if(h<18)return[L('Sono le '+t+'. Non dovresti essere da qualche altra parte?','It\'s '+t+'. Shouldn\'t you be somewhere else?'),'Invece sei qui. Con me. Mi piace.'];
+ return[L('Sono le '+t+'. Fuori è buio, vero?','It\'s '+t+'. It\'s dark outside, isn\'t it?'),'Qui dentro è sempre buio. Ma si sta caldi.']}
 function vib(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 async function battery(){try{const b=await navigator.getBattery();return Math.round(b.level*100)}catch(e){return null}}
 const isTouch=matchMedia('(pointer:coarse)').matches;
@@ -129,7 +739,16 @@ const isTouch=matchMedia('(pointer:coarse)').matches;
 const FBCFG={apiKey:"AIzaSyC346gJHt-Dg7_bjzYw7k1D6j0tcalxht4",authDomain:"goelectric-e9299.firebaseapp.com",databaseURL:"https://goelectric-e9299-default-rtdb.firebaseio.com",projectId:"goelectric-e9299",storageBucket:"goelectric-e9299.firebasestorage.app",messagingSenderId:"81618360543",appId:"1:81618360543:web:67a9a4d38ec18400c1316a"};
 const FBV='10.12.2',ROOT='mioAmico/';
 const NET={ok:false,d:null,R:null,stats:{},online:0,notes:[],fallen:[],broadcast:null};
+/* ID pubblico: hash del codice ospite. Nei nodi leggibili da tutti (presence, notes, fallen) non compare mai il codice vero,
+   che serve a caricare/sovrascrivere il salvataggio in players/. */
+let PUB='';
+async function pubOf(pid){const s='mioAmico:'+pid;
+ try{const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return'h_'+[...new Uint8Array(h)].slice(0,8).map(b=>b.toString(16).padStart(2,'0')).join('')}
+ catch(e){let h1=0xdeadbeef,h2=0x41c6ce57;for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677)}
+  h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);
+  return'h_'+(h2>>>0).toString(16).padStart(8,'0')+(h1>>>0).toString(16).padStart(8,'0')}}
 async function netInit(){try{
+ PUB=await pubOf(P.pid);
  const[a,d]=await Promise.all([import('https://www.gstatic.com/firebasejs/'+FBV+'/firebase-app.js'),import('https://www.gstatic.com/firebasejs/'+FBV+'/firebase-database.js')]);
  const app=a.initializeApp(FBCFG,'mioAmico');const db=d.getDatabase(app);
  NET.d=d;NET.R=x=>d.ref(db,ROOT+x);NET.ok=true;
@@ -141,22 +760,22 @@ async function netInit(){try{
  setPresence();cloudSave(true);
 }catch(e){NET.ok=false;console.warn('Il Mio Amico: offline',e)}}
 let presRef=null;
-function setPresence(){if(!NET.ok)return;try{const r=NET.R('presence/'+P.pid);if(presRef!==P.pid){NET.d.onDisconnect(r).remove().catch(()=>{});presRef=P.pid}NET.d.set(r,{at:Date.now(),day:S?S.day:0}).catch(()=>{})}catch(e){}}
+function setPresence(){if(!NET.ok||!PUB)return;try{const r=NET.R('presence/'+PUB);if(presRef!==PUB){NET.d.onDisconnect(r).remove().catch(()=>{});presRef=PUB}NET.d.set(r,{at:NET.d.serverTimestamp(),day:S?S.day:0}).catch(()=>{})}catch(e){}}
 let lastCloud=0;
 function cloudSave(force){if(!NET.ok||!P.name)return;const now=Date.now();if(!force&&now-lastCloud<20000)return;lastCloud=now;
  let v='-';try{v=CKMEM||localStorage.getItem(KEY)||'-'}catch(e){v=CKMEM||'-'}
- NET.d.set(NET.R('players/'+P.pid),{v,name:P.name.slice(0,12),lastSeen:now,plays:P.plays,endings:P.endings.slice(-20).join(','),deaths:P.deaths}).catch(()=>{})}
+ NET.d.set(NET.R('players/'+P.pid),{v:String(v).slice(0,20000),name:P.name.slice(0,12),lastSeen:now,plays:P.plays|0,endings:P.endings.slice(-20).join(',').slice(0,300),deaths:P.deaths|0}).catch(()=>{})}
 function inc(k){if(!NET.ok)return;NET.stats[k]=(NET.stats[k]||0)+1;NET.d.runTransaction(NET.R('stats/'+k),v=>(v||0)+1).catch(()=>{})}
 async function loadCode(code){if(!NET.ok)return'offline';if(!/^a_[a-z0-9]{8,20}$/.test(code))return'none';
  try{const s=await NET.d.get(NET.R('players/'+code));if(!s.exists())return'none';const v=s.val();
-  P.pid=code;P.name=clean(v.name,12,true);P.plays=v.plays||0;P.endings=String(v.endings||'').split(',').filter(Boolean);P.deaths=v.deaths||0;PREV_SEEN=v.lastSeen||0;P.lastSeen=Date.now();saveProfile();
+  P.pid=code;PUB=await pubOf(code);P.name=clean(v.name,12,true);P.plays=v.plays||0;P.endings=String(v.endings||'').split(',').filter(Boolean);P.deaths=v.deaths||0;PREV_SEEN=v.lastSeen||0;P.lastSeen=Date.now();saveProfile();
   if(v.v&&v.v!=='-'){CKMEM=v.v;try{localStorage.setItem(KEY,v.v)}catch(e){}}else clearCk();
   setPresence();return'ok'}catch(e){return'err'}}
 function prevHost(){const a=[...NET.fallen].reverse().map(x=>clean(x&&x.name,12,true)).filter(n=>n&&n!==P.name);return a.length?a[0]:'Marco'}
 function randNote(){const a=NET.notes.filter(n=>n&&n.text).map(n=>({t:clean(n.text,40),n:clean(n.name,12,true)})).filter(n=>n.t&&n.n&&n.n!==P.name);return a.length?a[Math.floor(Math.random()*a.length)]:null}
 setInterval(()=>{P.lastSeen=Date.now();saveProfile();setPresence();cloudSave()},60000);
 let hiddenAt=0;
-document.addEventListener('visibilitychange',()=>{if(document.hidden){hiddenAt=Date.now();document.title=P.name?'Torna qui, '+P.name.toLowerCase()+'.':'Torna qui.';P.lastSeen=Date.now();saveProfile();cloudSave(true)}else{document.title='Il Mio Amico';if(hiddenAt&&Date.now()-hiddenAt>15000&&S&&S.day>=4)SESSION.back=true}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){hiddenAt=Date.now();document.title=P.name?L('Torna qui, ','Come back, ')+P.name.toLowerCase()+'.':L('Torna qui.','Come back.');P.lastSeen=Date.now();saveProfile();cloudSave(true)}else{document.title=L('Il Mio Amico','Il Mio Amico (My Friend)');if(hiddenAt&&Date.now()-hiddenAt>15000&&S&&S.day>=4)SESSION.back=true}});
 
 /* ============ STATE ============ */
 let S=null;
@@ -175,23 +794,23 @@ function check(){if(S.hp<=0)throw new Over('hp');if(S.mente<=0)throw new Over('m
 /* ============ UI / SCRIPT ENGINE ============ */
 const ui={view:'start',vp:{},dialog:null,choices:null,mg:null,toasts:[],fade:1,fadeTo:0,fadeRes:null,shake:0,flash:0,glitch:0,hud:false,hover:-1,heart:0,music:false,t:0,tapRes:null,mood:null,mouth:null,px:200,py:100};
 function view(v,p={}){ui.view=v;ui.vp=p}
-function say(t,who=''){return new Promise(res=>{const tx=norm(String(t).replace(/\{P\}/g,P.name||'TU'));ui.dialog={text:tx,lines:wrap(tx,59),who,n:0,res}})}
-function promptBox(t){const tx=norm(t);ui.dialog={text:tx,lines:wrap(tx,59),who:'',n:tx.length,res:null}}
+function say(t,who=''){return new Promise(res=>{const tx=norm(tr(String(t)).replace(/\{P\}/g,P.name||L('TU','YOU')).replace(/\{N\}/g,S?S.name:''));ui.dialog={text:tx,lines:wrap(tx,59),who,n:0,res}})}
+function promptBox(t){const tx=norm(tr(t));ui.dialog={text:tx,lines:wrap(tx,59),who:'',n:tx.length,res:null}}
 const N=t=>say(t),T=t=>say(t,'tu'),A=t=>say(t,'a'),G=t=>say(t,'g'),F=t=>say(t,'f');
 let inputOpen=false;
 function askText(q,max,low){return new Promise(res=>{const box=document.getElementById('inp'),t=document.getElementById('inpt'),ok=document.getElementById('inpok');
- document.getElementById('inpq').textContent=q;t.value='';t.maxLength=max;t.className=low?'low':'';box.style.display='flex';inputOpen=true;setTimeout(()=>t.focus(),60);
+ document.getElementById('inpq').textContent=tr(q);t.value='';t.maxLength=max;t.className=low?'low':'';box.style.display='flex';inputOpen=true;setTimeout(()=>t.focus(),60);
  const done=()=>{box.style.display='none';inputOpen=false;t.onkeydown=null;ok.onclick=null;t.blur();res(t.value)};
  t.onkeydown=e=>{e.stopPropagation();if(e.key==='Enter')done()};ok.onclick=done})}
 async function chooseG(id,opts,cols,pos){const i=await choose(opts,cols,pos);const k='c_'+id+'_'+i;inc(k);
- if(NET.ok){let tot=0;for(let j=0;j<opts.length;j++)tot+=NET.stats['c_'+id+'_'+j]||0;if(tot>=3)toast(Math.round((NET.stats[k]||0)/tot*100)+'% HA SCELTO COME TE','#9fd8ff')}
+ if(NET.ok){let tot=0;for(let j=0;j<opts.length;j++)tot+=NET.stats['c_'+id+'_'+j]||0;if(tot>=3)toast(Math.round((NET.stats[k]||0)/tot*100)+L('% HA SCELTO COME TE','% CHOSE LIKE YOU'),'#9fd8ff')}
  return i}
-function choose(opts,cols=1,pos='right'){return new Promise(res=>{ui.choices={opts:opts.map(norm),cols,pos,res};ui.hover=-1})}
+function choose(opts,cols=1,pos='right'){return new Promise(res=>{ui.choices={opts:opts.map(o=>norm(tr(o))),cols,pos,res};ui.hover=-1})}
 function pick(i){const c=ui.choices;if(!c)return;ui.choices=null;SFX.sel();c.res(i)}
 function tap(){return new Promise(r=>ui.tapRes=r)}
 function fade(to){return new Promise(r=>{ui.fadeTo=to;if(ui.fade===to)return r();ui.fadeRes=r})}
 function toast(t,c){ui.toasts.push({t:norm(t),c,a:0})}
-function st(k,d){const old=S[k];S[k]=k==='soldi'?Math.max(0,S[k]+d):clamp(S[k]+d,0,100);const r=S[k]-old;if(r){toast((r>0?'+':'')+r+' '+LBL[k][0],LBL[k][1]);if(k==='hp'&&r<0){ui.shake=4;ui.flash=.5;SFX.bad();vib(120)}if(k==='mente'&&r<=-8)ui.glitch=.25}}
+function st(k,d){const old=S[k];S[k]=k==='soldi'?Math.max(0,S[k]+d):clamp(S[k]+d,0,100);const r=S[k]-old;if(r){toast((r>0?'+':'')+r+' '+tr(LBL[k][0]),LBL[k][1]);if(k==='hp'&&r<0){ui.shake=4;ui.flash=.5;SFX.bad();vib(120)}if(k==='mente'&&r<=-8)ui.glitch=.25}}
 function layoutChoices(){const c=ui.choices,n=c.opts.length,cols=c.cols,rows=Math.ceil(n/cols),bh=17,gap=4;
  let bw=cols===1?Math.max(112,Math.max(...c.opts.map(o=>o.length))*6+26):152;
  const tw=cols*bw+(cols-1)*gap;const x0=c.pos==='center'?(W-tw)/2:W-10-tw;
@@ -208,7 +827,7 @@ function press(x,y,kb){
  if(ui.tapRes){const r=ui.tapRes;ui.tapRes=null;SFX.sel();r();return}
  const d=ui.dialog;if(d&&d.res){if(d.n<d.text.length)d.n=d.text.length;else{const r=d.res;d.res=null;r()}}
 }
-cv.addEventListener('pointerdown',e=>{e.preventDefault();if(inputOpen)return;audio();if(!fsTried){fsTried=true;goFS()}pdown=true;const[x,y]=pos(e);ui.px=x;ui.py=y;press(x,y)});
+cv.addEventListener('pointerdown',e=>{e.preventDefault();if(inputOpen)return;audio();pdown=true;const[x,y]=pos(e);ui.px=x;ui.py=y;press(x,y)});
 addEventListener('pointermove',e=>{const[x,y]=pos(e);ui.px=x;ui.py=y;if(ui.choices)ui.hover=hitChoice(x,y);if(ui.mg&&ui.mg.move)ui.mg.move(x,y,pdown)});
 addEventListener('pointerup',()=>{pdown=false;if(ui.mg&&ui.mg.up)ui.mg.up()});
 addEventListener('pointercancel',()=>{pdown=false;if(ui.mg&&ui.mg.up)ui.mg.up()});
@@ -220,13 +839,24 @@ addEventListener('keydown',e=>{if(inputOpen)return;audio();const k=e.key;
   if(k==='ArrowDown'||k==='ArrowRight'){ui.hover=(ui.hover+1)%L;SFX.sel();return}
   if(k==='ArrowUp'||k==='ArrowLeft'){ui.hover=(ui.hover-1+L)%L;SFX.sel();return}
   if((k==='Enter'||k===' ')&&ui.hover>=0){pick(ui.hover);return}return}
- if(k===' '||k==='Enter'){e.preventDefault();if(!fsTried){fsTried=true;goFS()}press(-1,-1,true)}});
+ if(k===' '||k==='Enter'){e.preventDefault();press(-1,-1,true)}});
+/* schermo intero automatico al primo tocco/click ovunque (sui telefoni pointerdown non vale come gesto utente: si riprova su pointerup/touchend/click finché non riesce). Se è già un'app installata (PWA a schermo intero) non serve: così non compare l'avviso di Android */
+const isApp=matchMedia('(display-mode: fullscreen)').matches||matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+function isFS(){return !!(document.fullscreenElement||document.webkitFullscreenElement)}
+function autoFS(e){if(fsTried||isApp||isFS())return;
+ if(e.target&&e.target.id==='fs')return;
+ if(e.type==='keydown'&&(e.key==='f'||e.key==='F'))return;
+ goFS()}
+['pointerdown','pointerup','touchend','click','keydown'].forEach(t=>document.addEventListener(t,autoFS,{capture:true,passive:true}));
+document.addEventListener('fullscreenchange',()=>{if(isFS())fsTried=true});
+document.addEventListener('webkitfullscreenchange',()=>{if(isFS())fsTried=true});
 function goFS(toggle){const d=document,el=d.documentElement;
  if(toggle&&(d.fullscreenElement||d.webkitFullscreenElement)){try{(d.exitFullscreen||d.webkitExitFullscreen).call(d)}catch(e){}return}
  const rq=el.requestFullscreen||el.webkitRequestFullscreen;
  try{const p=rq&&rq.call(el,{navigationUI:'hide'});if(p&&p.then)p.then(lockO).catch(()=>{})}catch(e){}lockO()}
 function lockO(){try{if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(()=>{})}catch(e){}}
-document.getElementById('fs').addEventListener('click',()=>{audio();goFS(true)});
+document.getElementById('fs').addEventListener('click',()=>{audio();fsTried=true;goFS(true)});
+if(isApp)document.getElementById('fs').style.display='none';
 document.addEventListener('fullscreenchange',()=>{document.getElementById('fs').style.display=document.fullscreenElement?'none':'block'});
 
 /* ============ CREATURE / ARM ============ */
@@ -350,32 +980,32 @@ function drawShop(){const c=corr();R(0,0,W,H,mix('#eef4ee','#2a1a1a',c*.6));
 }
 function drawPhone(p){R(0,0,W,H,mix('#262b47','#1a0a10',corr()));
  R(138,6,108,206,'#111');R(142,18,100,180,'#f2f4f8');R(176,10,32,3,'#333');
- if(p.mode==='call'){const k=Math.floor(ui.t*2)%2;ell(192,70,20,20,'#f29bb5');text('G',189,66,'#ffffff');textC(norm(p.name),192,100,'#222222');textC('CHIAMATA',192,116,'#666666');textC('IN ARRIVO',192,126,'#666666');ell(166,170,10,10,'#e04040');ell(218,170,10,10,k?'#40c060':'#2a9a4a')}
- else if(p.mode==='search'){R(146,24,92,12,'#ffffff');R(146,24,92,1,'#bbbbbb');R(146,35,92,1,'#bbbbbb');text(norm(p.q).slice(0,15),149,27,'#333333');p.lines.forEach((l,i)=>{const bad=i>=3;text(norm(l).slice(0,15),149,46+i*22,bad?'#c01020':'#1a4ab0');R(149,55+i*22,60+((i*29)%26),2,'#cccccc')})}
- else{p.lines.forEach((l,i)=>text(norm(l).slice(0,15),148,28+i*11,'#222222'))}
+ if(p.mode==='call'){const k=Math.floor(ui.t*2)%2;ell(192,70,20,20,'#f29bb5');text('G',189,66,'#ffffff');textC(norm(tr(p.name)),192,100,'#222222');textC(tr('CHIAMATA'),192,116,'#666666');textC(tr('IN ARRIVO'),192,126,'#666666');ell(166,170,10,10,'#e04040');ell(218,170,10,10,k?'#40c060':'#2a9a4a')}
+ else if(p.mode==='search'){R(146,24,92,12,'#ffffff');R(146,24,92,1,'#bbbbbb');R(146,35,92,1,'#bbbbbb');text(norm(tr(p.q)).slice(0,15),149,27,'#333333');p.lines.forEach((l,i)=>{const bad=i>=3;text(norm(tr(l)).slice(0,15),149,46+i*22,bad?'#c01020':'#1a4ab0');R(149,55+i*22,60+((i*29)%26),2,'#cccccc')})}
+ else{p.lines.forEach((l,i)=>text(norm(tr(l)).slice(0,15),148,28+i*11,'#222222'))}
 }
 function drawBlack(){R(0,0,W,H,'#000000')}
 function drawCard(p){R(0,0,W,H,'#050306');for(let i=0;i<30;i++)R((i*97+Math.floor(ui.t*8)*13)%W,(i*53)%H,1,1,'#222');
  textO(norm(p.title),W/2,(p.sub&&p.sub.length>3)?22:70,'#ffffff',2,'#3a1020');
  (p.sub||[]).forEach((s,i)=>textC(norm(s),W/2,((p.sub.length>3)?50:100)+i*12,i===0&&p.sub.length<=3?'#ff7aa8':'#c8c8d8'));
- if(ui.tapRes&&Math.floor(ui.t*2)%2===0)textC('TOCCA PER CONTINUARE',W/2,196,'#777788');
+ if(ui.tapRes&&Math.floor(ui.t*2)%2===0)textC(tr('TOCCA PER CONTINUARE'),W/2,196,'#777788');
 }
 function drawTitle(){const gl=(ui.t%7)>6.82;
  R(0,0,W,H,gl?'#3a0010':'#ffd8e6');
  if(!gl)for(let i=-H;i<W;i+=24){ctx.fillStyle='#ffe6ef';ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i+12,0);ctx.lineTo(i+12+H,H);ctx.lineTo(i+H,H);ctx.fill()}
  for(let i=0;i<8;i++){const y=(H-((ui.t*14+i*40)%(H+20)));text('*',(i*53)%W,y,gl?'#801020':'#ff9ec0')}
  textO('IL MIO AMICO',W/2,18,gl?'#ff3030':'#ffffff',3,gl?'#000000':'#c0306a');
- textC(gl?'NON ERA UNA DOMANDA.':'UN GIOCO CARINO. PROMESSO.',W/2,48,gl?'#ff6060':'#c0306a');
+ textC(tr(gl?'NON ERA UNA DOMANDA.':'UN GIOCO CARINO. PROMESSO.'),W/2,48,gl?'#ff6060':'#c0306a');
  ctx.save();ctx.translate(192,118+Math.sin(ui.t*3)*3);ctx.scale(2,2);
  const ss=S;S=S||newState();drawCreature(0,0,gl?5:3,ui.t,{mood:gl?'angry':'happy',noroots:true});S=ss;ctx.restore();
- const fin=ENDKEYS.filter(k=>P.endings.includes(k)).length;const info=(NET.ok?'SVEGLI ORA: '+NET.online+'  OSPITI: '+(NET.stats.ospiti||0):'OFFLINE')+'  FINALI: '+fin+'/'+ENDKEYS.length;text(info,6,206,gl?'#ff6060':'#c0306a');
+ const fin=ENDKEYS.filter(k=>P.endings.includes(k)).length;const info=(NET.ok?L('SVEGLI ORA: ','AWAKE NOW: ')+NET.online+L('  OSPITI: ','  HOSTS: ')+(NET.stats.ospiti||0):'OFFLINE')+L('  FINALI: ','  ENDINGS: ')+fin+'/'+ENDKEYS.length;text(info,6,206,gl?'#ff6060':'#c0306a');
  text(hhmm(),W-34,206,gl?'#ff6060':'#c0306a');
 }
-function drawStart(){R(0,0,W,H,'#000000');textO('IL MIO AMICO',W/2,52,'#ffffff',3,'#5a1030');
- if(Math.floor(ui.t*2)%2===0)textC('TOCCA PER INIZIARE',W/2,110,'#ff9ec0');
- textC('SI GIOCA IN ORIZZONTALE, A SCHERMO INTERO',W/2,134,'#8888aa');
- textC('PC: CLIC / SPAZIO / TASTI 1-9   M AUDIO   F SCHERMO',W/2,176,'#555566');
- textC('CONTIENE TEMI HORROR E SANGUE. PEGI 16.',W/2,190,'#555566')}
+function drawStart(){R(0,0,W,H,'#000000');textO('IL MIO AMICO',W/2,22,'#ffffff',3,'#5a1030');
+ if(Math.floor(ui.t*2)%2===0)textC('SCEGLI LA LINGUA / CHOOSE LANGUAGE',W/2,58,'#ff9ec0');
+ textC(tr('SI GIOCA IN ORIZZONTALE, A SCHERMO INTERO'),W/2,80,'#8888aa');
+ textC(tr('PC: CLIC / SPAZIO / TASTI 1-9   M AUDIO   F SCHERMO'),W/2,94,'#555566');
+ textC(tr('CONTIENE TEMI HORROR E SANGUE. PEGI 16.'),W/2,108,'#555566')}
 function drawHospital(p){const c=corr();R(0,0,W,H,mix('#dfe9e4','#2a1a1e',c*.5));
  R(0,150,W,66,mix('#b8c4bf','#20141a',c*.5));R(0,150,W,2,'rgba(0,0,0,.2)');
  R(30,30,90,70,'#0b1430');for(let y=32;y<98;y+=5)R(30,y,90,3,'rgba(220,230,240,.85)');
@@ -402,7 +1032,7 @@ function drawNest(p){const t=ui.t;R(0,0,W,H,'#1e0306');
  for(let i=0;i<n;i++){const a=Math.PI*(.08+.84*i/(n-1));const x=192-Math.cos(a)*160,y=128+Math.sin(a)*8;
   R(x-4,y-28,8,8,'#050003');R(x-5,y-20,10,22,'#050003');const gy=y-38-Math.sin(t*2+i)*2;ell(x,gy,4,4,'#d98d4a');R(x-2,gy-1,1,1,'#000');R(x+1,gy-1,1,1,'#000');
   ctx.strokeStyle='#a447d0';ctx.beginPath();ctx.moveTo(x-3,gy-2);ctx.lineTo(x-5,gy+5);ctx.moveTo(x+3,gy-2);ctx.lineTo(x+5,gy+5);ctx.stroke();
-  if(names[i])textC(names[i],x,y+4,'#ff9ec0')}
+  if(names[i])textC(names[i],x,i%2?y-50:y+4,'#ff9ec0')}
  if(p.you){ctx.save();ctx.translate(192,132);ctx.scale(.9,.9);drawCreature(0,0,6,t,{mood:ui.mood,noroots:true});ctx.restore()}
  R(0,0,W,H,'rgba(80,0,10,'+(.1+Math.sin(t*2)*.05).toFixed(2)+')')}
 const VIEWS={hospital:drawHospital,street:drawStreet,nest:drawNest,room:drawRoom,wrist:drawWrist,mirror:drawMirror,work:drawWork,shop:drawShop,phone:drawPhone,black:drawBlack,card:drawCard,title:drawTitle,start:drawStart};
@@ -411,15 +1041,15 @@ const VIEWS={hospital:drawHospital,street:drawStreet,nest:drawNest,room:drawRoom
 function panel(x,y,w,h,col){x=Math.round(x);y=Math.round(y);R(x,y,w,h,col);R(x,y,w,1,'rgba(255,255,255,.35)');R(x,y+h-1,w,1,'rgba(0,0,0,.25)');const b=mix(col,'#0a1a3a',.55);R(x+w-7,y-2,9,2,b);R(x+w,y-2,2,7,b);R(x-2,y+h-5,2,7,b);R(x-2,y+h,9,2,b)}
 function bar(x,y,w,v,c){R(x,y,w,5,'#0d1530');R(x,y,Math.round(w*v/100),5,c)}
 function drawHUD(){const th=theme();
- panel(4,4,58,13,th);const ck=hhmm();text('G'+S.day+' '+ck.slice(0,2)+(Math.floor(ui.t*2)%2?':':' ')+ck.slice(3),8,7);
- panel(68,4,72,13,th);text('SALUTE',71,7,'#ffd0d6');bar(110,8,27,S.hp,'#ff5a6a');
- panel(146,4,66,13,th);text('MENTE',149,7,'#ead6ff');bar(182,8,27,S.mente,'#c58cff');
+ panel(4,4,58,13,th);const ck=hhmm();text(L('G','D')+S.day+' '+ck.slice(0,2)+(Math.floor(ui.t*2)%2?':':' ')+ck.slice(3),8,7);
+ panel(68,4,72,13,th);text(tr('SALUTE'),71,7,'#ffd0d6');bar(110,8,27,S.hp,'#ff5a6a');
+ panel(146,4,66,13,th);text(tr('MENTE'),149,7,'#ead6ff');bar(182,8,27,S.mente,'#c58cff');
  panel(218,4,40,13,th);text('€'+S.soldi,222,7,'#ffe066');
- if(S.hudFriend){panel(264,4,116,13,mix('#c060d8','#7a0a20',corr()));text('FAME',268,7,'#ffe0b0');bar(294,8,40,S.fame,S.fame>=80?'#ff3030':'#ffb347');text('*'+S.legame,340,7,'#ffc0e6')}}
+ if(S.hudFriend){panel(264,4,116,13,mix('#c060d8','#7a0a20',corr()));const fl=tr('FAME'),fx=270+fl.length*6;text(fl,268,7,'#ffe0b0');bar(fx,8,334-fx,S.fame,S.fame>=80?'#ff3030':'#ffb347');text('*'+S.legame,340,7,'#ffc0e6')}}
 function drawDialog(){const d=ui.dialog;if(!d)return;
  const th=d.who==='a'?mix('#b54fd0','#7a0a20',corr()):d.who==='g'?'#2f9a6a':d.who==='f'?'#5a7080':d.who==='tu'?mix('#3a6fb8','#5a1a2a',corr()):theme();
  panel(6,152,372,58,th);
- if(d.who){const nm=d.who==='a'?norm(S.name):d.who==='g'?'GIULIA':d.who==='f'?'DOTT.SSA FERRI':'TU';panel(12,142,nm.length*6+10,12,mix(th,'#000000',.3));text(nm,17,145)}
+ if(d.who){const nm=d.who==='a'?norm(S.name):d.who==='g'?'GIULIA':d.who==='f'?L('DOTT.SSA FERRI','DR. FERRI'):L('TU','YOU');panel(12,142,nm.length*6+10,12,mix(th,'#000000',.3));text(nm,17,145)}
  let left=Math.floor(d.n);for(let i=0;i<d.lines.length&&left>0;i++){let s=d.lines[i].slice(0,left);left-=d.lines[i].length+1;
   if(d.who==='a'&&S&&S.stage>=4&&Math.random()<.05){const j=Math.floor(Math.random()*s.length);s=s.slice(0,j)+'#%&?/'[Math.floor(Math.random()*5)]+s.slice(j+1)}
   text(s,13,158+i*10)}
@@ -431,20 +1061,20 @@ function drawToasts(){ui.toasts.forEach((t,i)=>{ctx.globalAlpha=clamp(2-t.a,0,1)
 /* ============ MINIGAMES ============ */
 function fmtT(t){const m=Math.floor(t/60),s=Math.floor(t%60),c=Math.floor((t*100)%100);return[m,s,c].map(v=>String(v).padStart(2,'0')).join(':')}
 function mgTiming(p){ui.dialog=null;return new Promise(res=>{
- const m={rounds:p.rounds||3,i:0,rs:[],pos:0,dir:1,sp:p.speed||.9,zc:.3+Math.random()*.4,zw:p.zone||.22,t:0,fl:0,last:null,label:norm(p.label||'')};
+ const m={rounds:p.rounds||3,i:0,rs:[],pos:0,dir:1,sp:p.speed||.9,zc:.3+Math.random()*.4,zw:p.zone||.22,t:0,fl:0,last:null,label:norm(tr(p.label||''))};
  m.update=dt=>{m.t+=dt;if(m.fl>0){m.fl-=dt;if(m.fl<=0){if(m.i>=m.rounds){ui.mg=null;res(m.rs.filter(Boolean).length)}else{m.zc=.15+Math.random()*.7;m.sp*=1.18;m.pos=Math.random()<.5?0:1;m.dir=m.pos?-1:1}}return}
   m.pos+=m.dir*m.sp*dt;if(m.pos>1){m.pos=1;m.dir=-1}if(m.pos<0){m.pos=0;m.dir=1}};
  m.tap=()=>{if(m.fl>0)return;const hit=Math.abs(m.pos-m.zc)<m.zw/2;m.rs.push(hit);m.last=hit;m.i++;m.fl=.65;if(hit)SFX.ok();else{SFX.bad();ui.shake=3}};
  m.draw=()=>{const th=theme();R(0,0,W,H,'rgba(0,0,0,.25)');
   panel(8,24,368,38,th);for(let k=0;k<m.rounds;k++){const x=16+k*22,y=32;if(k<m.rs.length){if(m.rs[k]){R(x,y,16,16,'#ffffff');R(x+3,y+3,10,10,'#3ce06a')}else{R(x,y,16,16,'#ffffff');text('X',x+5,y+5,'#e02040')}}else{R(x,y,16,2,'#fff');R(x,y+14,16,2,'#fff');R(x,y,2,16,'#fff');R(x+14,y,2,16,'#fff')}}
-  const pc=m.rs.length?Math.round(m.rs.filter(Boolean).length/m.rounds*100):0;text('SUCCESSO',292,28,'#dfe9ff');textC(pc+'%',334,40,'#ffffff',2);
+  const pc=m.rs.length?Math.round(m.rs.filter(Boolean).length/m.rounds*100):0;text(tr('SUCCESSO'),292,28,'#dfe9ff');textC(pc+'%',334,40,'#ffffff',2);
   panel(8,68,70,14,th);text('ROUND '+Math.min(m.i+1,m.rounds),14,72);
-  panel(86,68,290,14,th);text('TOCCA AL MOMENTO GIUSTO',94,72);
-  panel(236,88,140,14,th);text('TEMPO '+fmtT(m.t),246,92);
+  panel(86,68,290,14,th);text(tr('TOCCA AL MOMENTO GIUSTO'),94,72);
+  panel(236,88,140,14,th);text(L('TEMPO ','TIME ')+fmtT(m.t),246,92);
   panel(40,110,304,30,mix(th,'#0a1530',.5));text(m.label,48,113,'#ffe066');
   R(48,124,288,10,'#0d1530');R(48+(m.zc-m.zw/2)*288,124,m.zw*288,10,'#3ce06a');R(48+(m.zc-m.zw/2)*288,124,m.zw*288,2,'#9affb0');
   const cx=48+m.pos*288;R(cx-2,119,5,20,'#000');R(cx-1,120,3,18,'#fff');
-  if(m.fl>0)textO(m.last?'OK!':'MANCATO',W/2,150,m.last?'#3ce06a':'#ff4060',2)};
+  if(m.fl>0)textO(m.last?'OK!':tr('MANCATO'),W/2,150,m.last?'#3ce06a':'#ff4060',2)};
  ui.mg=m})}
 function mgRub(p){ui.dialog=null;return new Promise(res=>{
  const m={t:0,T:p.time||7,v:0,need:p.need||320,bites:0,lx:null,ly:null,danger:p.danger||0,red:false,cool:0,parts:[]};
@@ -455,7 +1085,7 @@ function mgRub(p){ui.dialog=null;return new Promise(res=>{
  m.tap=(x,y,kb)=>{if(kb){rub(24,CX,CY-20);return}m.lx=x;m.ly=y};
  m.move=(x,y,down)=>{if(!down||m.lx==null)return;const d=Math.hypot(x-m.lx,y-m.ly);m.lx=x;m.ly=y;const G=g();if(Math.hypot(x-G.x,y-G.by)<G.r+22)rub(d,x,y)};
  m.up=()=>{m.lx=null};
- m.draw=()=>{const th=theme();panel(8,24,368,30,th);text('ACCAREZZA '+norm(S.name),16,28);text(m.danger?'ATTENZIONE AGLI OCCHI ROSSI!':'STROFINA IL DITO SOPRA DI LUI',16,40,m.danger?'#ffb0b0':'#dfe9ff');
+ m.draw=()=>{const th=theme();panel(8,24,368,30,th);text(L('ACCAREZZA ','PET ')+norm(S.name),16,28);text(tr(m.danger?'ATTENZIONE AGLI OCCHI ROSSI!':'STROFINA IL DITO SOPRA DI LUI'),16,40,m.danger?'#ffb0b0':'#dfe9ff');
   R(228,30,120,8,'#0d1530');R(228,30,120*clamp(m.v/m.need,0,1),8,'#ff8fc8');text('*',352,30,'#ff8fc8');text(fmtT(Math.max(0,m.T-m.t)),262,42,'#ffffff');
   m.parts.forEach(q=>{ctx.globalAlpha=1-q.a;text('*',q.x,q.y-q.a*20,'#ff6fb0');ctx.globalAlpha=1})};
  ui.mg=m})}
@@ -465,7 +1095,7 @@ function mgFeed(p){ui.dialog=null;return new Promise(res=>{
  const open=()=>Math.max(0,Math.sin(m.t*2.4-1));
  m.update=dt=>{m.t+=dt;ui.mouth=open();if(m.toss>0)m.toss-=dt;if((m.hits>=m.need||m.t>=m.T)&&m.toss<=0){ui.mg=null;ui.mouth=null;res(m.hits)}};
  m.tap=()=>{if(m.toss>0||m.hits>=m.need)return;m.toss=.35;m.ok=open()>.5;if(m.ok){m.hits++;tone(300,.08,'square',.05,-150);setTimeout(()=>noise(.1,.25,700),120)}else{m.miss++;SFX.bad()}};
- m.draw=()=>{const th=theme(),G=crGeom();panel(8,24,368,30,th);text('NUTRI '+norm(S.name),16,28);text('TOCCA QUANDO APRE LA BOCCA',16,40,'#dfe9ff');
+ m.draw=()=>{const th=theme(),G=crGeom();panel(8,24,368,30,th);text(L('NUTRI ','FEED ')+norm(S.name),16,28);text(tr('TOCCA QUANDO APRE LA BOCCA'),16,40,'#dfe9ff');
   for(let i=0;i<m.need;i++){R(262+i*16,30,12,12,i<m.hits?'#3ce06a':'#0d1530');drawFood(m.food,268+i*16,36)}
   text(fmtT(Math.max(0,m.T-m.t)),314,44,'#ffffff');
   if(m.toss>0){const k=1-m.toss/.35;const x=G.x+(m.ok?0:30*k),y=60+(G.my-60)*k+(m.ok?0:k*40);drawFood(m.food,x,y)}else drawFood(m.food,G.x,64+Math.sin(ui.t*6)*2)};
@@ -500,7 +1130,7 @@ function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;update(dt);dr
 requestAnimationFrame(loop);
 
 /* ============ STORY HELPERS ============ */
-async function card(title,sub){ui.dialog=null;ui.choices=null;view('card',{title,sub});await fade(0);await tap();await fade(1)}
+async function card(title,sub){ui.dialog=null;ui.choices=null;view('card',{title:tr(title),sub:(sub||[]).map(tr)});await fade(0);await tap();await fade(1)}
 async function night(t){view('black');ui.dialog=null;await fade(0);if(t)await N(t);await fade(1);ui.dialog=null}
 async function morning(){view('room',{time:'giorno'});ui.dialog=null;ui.music=S.stage<4;await fade(0)}
 
@@ -556,7 +1186,7 @@ async function chapter1(){
  await A('...ciao.');
  await A('CIAO! Ciao ciao ciao!');
  ui.mood=null;await A('Tu sei {P}. Lo so. Me l\'hai detto tu, all\'inizio. Ricordi?');st('mente',-3);
- if(P.plays>1){await A('Ed è la volta numero '+P.plays+' che ci incontriamo. Io me le ricordo tutte.');
+ if(P.plays>1){await A(L('Ed è la volta numero '+P.plays+' che ci incontriamo. Io me le ricordo tutte.','This is time number '+P.plays+' that we meet. I remember every single one.'));
   const LE={dono:'L\'ultima volta mi hai dato un dito. Era buonissimo.',rifiuto:'L\'ultima volta mi hai detto di no. Me lo sono preso lo stesso.',ribelle:'L\'ultima volta hai preso il coltello. Non l\'ho dimenticato.',controllo:'L\'ultima volta la tua mano era mia. Un po\' lo è ancora.',hp:'L\'ultima volta ti ho mangiato tutto. Non te lo ricordi?',mente:'L\'ultima volta siamo diventati una cosa sola.',
   unione:'L\'ultima volta siamo diventati una porta, insieme. Era bellissimo.',amico:'L\'ultima volta mi hai chiesto di andarmene. E io l\'ho fatto. Ma sono tornato.',lama:'L\'ultima volta mi hai strappato via. Mi hai fatto tanto male.',pasto:'L\'ultima volta ti ho mangiato tutto. Fino all\'ultimo osso.',giulia:'L\'ultima volta mi hai dato a tua sorella. Lei ti saluta.',ospite:'L\'ultima volta mi hai guardato. Davvero. Ti sto guardando anche adesso.'};
   const le=P.endings[P.endings.length-1];if(LE[le]){ui.glitch=.4;await A(LE[le])}}
@@ -581,7 +1211,7 @@ async function chapter1(){
  else await A('...È caduto. Fa niente. Ci riproveremo. Abbiamo tanto tempo.');
  await A('Io non ho un nome. Me ne dai uno?');
  const c5=await chooseG('nome',['"Amico"','"Puntino"','"Cosa"']);
- S.name=['AMICO','PUNTINO','COSA'][c5];S.hudFriend=true;S.flags.nome=c5;
+ S.name=(LANG==='en'?['BUDDY','DOT','THING']:['AMICO','PUNTINO','COSA'])[c5];S.hudFriend=true;S.flags.nome=c5;
  if(c5===0){ui.mood='happy';await A('Amico... AMICO! Mi piace! Allora siamo amici!');st('legame',10)}
  else if(c5===1){await A('Puntino. Perché ero piccolo piccolo. Ma crescerò, sai?');st('legame',5)}
  else{await A('...Cosa.');await A('Va bene. Mi ricorderò che mi hai chiamato così.');st('legame',-5);st('mente',-5)}
@@ -612,7 +1242,7 @@ async function work(tut){view('work');ui.music=false;
 /* ============ CAPITOLO 2 ============ */
 async function chapter2(){
  if(S.day>7)return;
- ui.hud=false;await card('CAPITOLO 2',['IL MIO AMICO',S.day>4?'GIORNO '+S.day:'']);
+ ui.hud=false;await card('CAPITOLO 2',['IL MIO AMICO',S.day>4?L('GIORNO ','DAY ')+S.day:'']);
  ui.hud=true;await awayCheck();
  while(S.day<=7){saveCk();S.act=3;S.talked=false;S.mirror=false;S.met=false;
   await dayStart();check();
@@ -624,25 +1254,25 @@ async function awayCheck(){
  const away=PREV_SEEN?Date.now()-PREV_SEEN:0;PREV_SEEN=0;
  if(S.hudFriend&&away>10*60000){await morning();view('wrist');
   const h=Math.floor(away/3600000),m=Math.floor(away/60000)%60,dd=Math.floor(h/24);
-  const txt=dd>=1?dd+(dd>1?' giorni':' giorno'):h>=1?h+(h>1?' ore':' ora')+' e '+m+' minuti':m+' minuti';
-  ui.mood='angry';await A('Mi hai lasciato da solo per '+txt+', {P}.');ui.mood=null;
+  const txt=LANG==='en'?(dd>=1?dd+(dd>1?' days':' day'):h>=1?h+(h>1?' hours':' hour')+' and '+m+' minutes':m+' minutes'):(dd>=1?dd+(dd>1?' giorni':' giorno'):h>=1?h+(h>1?' ore':' ora')+' e '+m+' minuti':m+' minuti');
+  ui.mood='angry';await A(L('Mi hai lasciato da solo per '+txt+', {P}.','You left me alone for '+txt+', {P}.'));ui.mood=null;
   const tl=timeLine();await A(tl[0]);
   const add=Math.min(40,Math.floor(away/3600000*8));
   if(add>=5){await A('Mentre non c\'eri, ho avuto tanta fame.');st('fame',add)}else await A('Ma adesso sei qui. Tornano sempre tutti.')}
 }
 async function dayStart(){const d=S.day;
  if(d===5)S.stage=4;if(d===7)S.stage=5;
- await morning();await N('Giorno '+d+'.');
+ await morning();await N(L('Giorno ','Day ')+d+'.');
  if(d===4){view('wrist');ui.mood='happy';
   await A('Buongiorno, {P}! Stanotte ho dormito un po\' dentro di te. Era caldissimo.');ui.mood=null;
   await A('Oggi voglio qualcosa di DOLCE. Me lo prendi? Per favore per favore per favore.');
   const tl=timeLine();await A(tl[0]);await A(tl[1]);
   await A(isTouch?'Mi guardi da un telefono. Mi porti sempre in tasca... o sono io che porto te?':'Mi guardi da un computer. Uno schermo grande. Così ti vedo meglio anche io.');
   S.demand='biscotti';
-  await N('Ogni giorno hai 3 azioni: LAVORA per i soldi, FAI LA SPESA, ACCAREZZA '+S.name+'.');
-  await N('NUTRI, PARLA e SPECCHIO non costano azioni. Se '+S.name+' ha troppa fame... mangerà qualcos\'altro.')}
+  await N('Ogni giorno hai 3 azioni: LAVORA per i soldi, FAI LA SPESA, ACCAREZZA {N}.');
+  await N('NUTRI, PARLA e SPECCHIO non costano azioni. Se {N} ha troppa fame... mangerà qualcos\'altro.')}
  if(d===5){view('wrist');
-  await N(S.name+' è cresciuto. Ora ha dei dentini.');
+  await N('{N} è cresciuto. Ora ha dei dentini.');
   await N('Intorno, le vene sono diventate scure. Rosse e blu, come una mappa.');
   await A('Il dolce non mi basta più.');
   await A('Voglio CARNE. Cruda. Rossa. Piena di succo.');
@@ -662,7 +1292,7 @@ async function dayStart(){const d=S.day;
   await A('Voglio qualcosa che si MUOVE. Qualcosa di vivo.');
   await A('Al negozio hanno i pesciolini rossi. Li ho visti. Con i tuoi occhi.');
   S.demand='pesce';
-  const bt=await battery();if(bt!=null){await A('La tua batteria è al '+bt+'%.');await A(bt<30?'Anche tu ti stai scaricando, {P}.':'Bene. Ne avremo bisogno, stanotte.')}
+  const bt=await battery();if(bt!=null){await A(L('La tua batteria è al '+bt+'%.','Your battery is at '+bt+'%.'));await A(bt<30?'Anche tu ti stai scaricando, {P}.':'Bene. Ne avremo bisogno, stanotte.')}
   if(S.flags.giulia){view('room',{time:'giorno'});SFX.knock();
    await N('Bussano alla porta. TOC. TOC. TOC.');
    await G('Sono io. Apri. Fammi vedere quel braccio.');
@@ -676,28 +1306,29 @@ async function dayStart(){const d=S.day;
    else{S.flags.giuliaAvvisa=1;await T('Sto bene. Vattene, per favore.');await G('...Va bene. Ma se domani non rispondi al telefono, chiamo qualcuno.');await N('I suoi passi si allontanano per le scale.');st('mente',-10);st('legame',10)}}}
  if(d===7){view('room',{time:'giorno'});await N('Ti svegli. Non ricordi niente della notte.');
   view('wrist');ui.heart=1;
-  await N(S.name+' ora è grande quanto un pugno.');
+  await N('{N} ora è grande quanto un pugno.');
   await N('Ha tre occhi. Non ricordi quando è spuntato il terzo.');
   await A('...');
-  await N(S.name+' non parla. Ti guarda e basta.');ui.heart=0;
+  await N('{N} non parla. Ti guarda e basta.');ui.heart=0;
   if(S.flags.giuliaAvvisa){view('phone',{mode:'msg',lines:['GIULIA:','','PERCHE\' NON','RISPONDI?','','STO VENENDO','DA TE.','NON SONO SOLA.']});await N('Un messaggio di Giulia. Poi il telefono si spegne da solo.');S.flags.giuliaArriva=1}
   S.demand=null}
 }
 async function hub(){
  while(true){
   if(SESSION.back){SESSION.back=false;view('wrist');await A('Dove vai quando lo schermo si spegne, {P}?');await A('Io resto qui. Al buio. Ad aspettare.');st('mente',-3)}
-  if(new Date().getHours()===3&&!SESSION.h3){SESSION.h3=1;view('wrist');ui.glitch=.6;SFX.sting();await A('Sono le '+hhmm()+'. L\'ora in cui dormono tutti.');await A('Tranne noi due.');st('mente',-5)}
+  if(new Date().getHours()===3&&!SESSION.h3){SESSION.h3=1;view('wrist');ui.glitch=.6;SFX.sting();await A(L('Sono le '+hhmm()+'. L\'ora in cui dormono tutti.','It\'s '+hhmm()+'. The hour when everyone sleeps.'));await A('Tranne noi due.');st('mente',-5)}
   const b=NET.broadcast;if(b&&b.text&&String(b.id)!==P.seenB){P.seenB=String(b.id);saveProfile();view('wrist');ui.glitch=.3;await A(String(b.text).slice(0,250))}
   view('room',{time:S.act>=3?'giorno':S.act>=1?'sera':'notte'});
   if(S.act<=0){await N('Sei a pezzi. È ora di dormire.');return}
-  const dm=S.demand&&!S.met?' '+S.name+' VUOLE: '+FOOD[S.demand].n+'.':'';
-  promptBox('Azioni rimaste: '+S.act+'.'+dm+' Cosa fai?');
-  const c=await choose(['LAVORA (1)','FAI LA SPESA (1)','NUTRI '+S.name,'ACCAREZZA (1)','PARLA'+(S.talked?' (FATTO)':''),'SPECCHIO'+(S.mirror?' (FATTO)':''),'DORMI'],2);
+  const dm=S.demand&&!S.met?' '+S.name+L(' VUOLE: ',' WANTS: ')+tr(FOOD[S.demand].n)+'.':'';
+  promptBox(L('Azioni rimaste: ','Actions left: ')+S.act+'.'+dm+L(' Cosa fai?',' What do you do?'));
+  const dn=L(' (FATTO)',' (DONE)');
+  const c=await choose([L('LAVORA (1)','WORK (1)'),L('FAI LA SPESA (1)','GO SHOPPING (1)'),L('NUTRI ','FEED ')+S.name,L('ACCAREZZA (1)','PET (1)'),L('PARLA','TALK')+(S.talked?dn:''),L('SPECCHIO','MIRROR')+(S.mirror?dn:''),L('DORMI','SLEEP')],2);
   if(c===0){S.act--;await work2()}
   else if(c===1){S.act--;await shop()}
   else if(c===2)await feed();
   else if(c===3){S.act--;await pet()}
-  else if(c===4){if(S.talked)await N(S.name+' non ha voglia di parlare, adesso.');else{S.talked=true;await talk()}}
+  else if(c===4){if(S.talked)await N('{N} non ha voglia di parlare, adesso.');else{S.talked=true;await talk()}}
   else if(c===5){if(S.mirror)await N('Meglio non guardarsi di nuovo. Non oggi.');else{S.mirror=true;await mirror()}}
   else return;
   check()}
@@ -707,8 +1338,8 @@ async function work2(){await work(false);st('fame',15);
  if(S.fame>=80){await N('Il polso ti fa male per tutto il giorno.');st('hp',-5)}}
 async function shop(){view('shop');ui.dialog=null;await N('Il supermercato sotto casa. Luci al neon. Musichetta allegra.');
  while(true){const items=['biscotti','latte','carne'];if(S.day>=6)items.push('pesce');
-  promptBox('Hai €'+S.soldi+'. Cosa compri?');
-  const c=await choose([...items.map(k=>FOOD[k].n+' €'+FOOD[k].p),'ESCI']);
+  promptBox(L('Hai €'+S.soldi+'. Cosa compri?','You have €'+S.soldi+'. What do you buy?'));
+  const c=await choose([...items.map(k=>tr(FOOD[k].n)+' €'+FOOD[k].p),'ESCI']);
   if(c===items.length)break;const k=items[c];
   if(S.soldi<FOOD[k].p){await N('Non hai abbastanza soldi.');continue}
   st('soldi',-FOOD[k].p);S.food[k]++;SFX.ok();
@@ -717,7 +1348,7 @@ const MET={4:'DOLCE! Sei il migliore. Il migliore migliore migliore.',5:'Mmmh. S
 async function feed(){const have=Object.keys(FOOD).filter(k=>k==='sangue'?S.day>=8:S.food[k]>0);
  if(!have.length){await N('Non hai niente da dargli. Prima fai la spesa.');return}
  view('wrist');promptBox('Cosa gli dai?');
- const c=await choose([...have.map(k=>FOOD[k].n+' X'+S.food[k]),'INDIETRO']);
+ const c=await choose([...have.map(k=>tr(FOOD[k].n)+(k==='sangue'?'':' X'+S.food[k])),'INDIETRO']);
  if(c===have.length)return;const k=have[c];let h=3;
  if(k==='sangue'){await N('Ti pungi il polpastrello con un ago. Lo appoggi sulla sua bocca.');await N('Succhia. Forte. Più forte di quanto pensassi.');st('hp',-12)}
  else{S.food[k]--;
@@ -734,7 +1365,7 @@ async function pet(){view('wrist');
  if(r.ok){if(S.day<=4){ui.mood='happy';await A('Hihi! Fa il solletico!');st('legame',8);st('mente',5)}
   else{await N('È caldo. Troppo caldo. E ti piace.');await N('Non dovrebbe piacerti.');st('legame',8);st('mente',-3)}ui.mood=null}
  else{await A('Già finito? Ancora un pochino...');st('legame',2)}
- if(r.bites)await N('Ti ha morso '+r.bites+(r.bites>1?' volte':' volta')+'. Dice che era un gioco.')}
+ if(r.bites)await N(LANG==='en'?'It bit you '+(r.bites>1?r.bites+' times':'once')+'. It says it was a game.':'Ti ha morso '+r.bites+(r.bites>1?' volte':' volta')+'. Dice che era un gioco.')}
 const TALK={4:['Da dove vieni?','Da su. Molto su. Faceva tanto freddo.','Poi sono caduto. E ho trovato te. Tu sei caldo.'],
  5:['Ce ne sono altri come te?','Tanti. Dormono. Aspettano.','Aspettano qualcuno gentile come te. Tu sei gentile, vero?'],
  6:['Cosa vuoi da me?','Voglio stare con te. Dentro di te. Per sempre.','È una cosa bella, sai? Le persone la chiamano amore.'],
@@ -742,13 +1373,13 @@ const TALK={4:['Da dove vieni?','Da su. Molto su. Faceva tanto freddo.','Poi son
  8:['Perché parli con la mia bocca?','Perché la tua bocca è anche mia, adesso.','Tutto quello che è tuo è anche mio. È questo, essere amici.'],
  9:['Cosa succederà?','Domani notte il cielo cade.','Devi essere pronto. ...Pronta. Pronto. Non importa più.']};
 async function talk(){view('wrist');const t=[...TALK[S.day]];
- if(S.day===5&&NET.ok&&NET.online>1)t[1]='Tanti. Proprio adesso ce ne sono '+(NET.online-1)+' svegli, insieme al loro ospite. Li sento.';
- if(S.day===7){if(P.plays>1&&Math.random()<.5){t[1]='Sì. Eri tu, {P}. L\'altra volta.';t[2]='Non ti ricordi? Io sì.'}else t[1]='Sì. Si chiamava '+prevHost()+'. Era buono.'}await T(t[0]);if(S.day>=6)ui.heart=1;await A(t[1]);await A(t[2]);ui.heart=0;st('legame',3);if(S.day>=6)st('mente',-4)}
+ if(S.day===5&&NET.ok&&NET.online>1)t[1]=L('Tanti. Proprio adesso ce ne sono '+(NET.online-1)+' svegli, insieme al loro ospite. Li sento.','Lots. Right now '+(NET.online-1)+' of them are awake, together with their host. I can feel them.');
+ if(S.day===7){if(P.plays>1&&Math.random()<.5){t[1]='Sì. Eri tu, {P}. L\'altra volta.';t[2]='Non ti ricordi? Io sì.'}else t[1]=L('Sì. Si chiamava '+prevHost()+'. Era buono.','Yes. Their name was '+prevHost()+'. They were nice.')}await T(t[0]);if(S.day>=6)ui.heart=1;await A(t[1]);await A(t[2]);ui.heart=0;st('legame',3);if(S.day>=6)st('mente',-4)}
 async function mirror(){const w=Math.min(3,S.day-4);view('mirror',{w});
  if(w===0){await N('Ti guardi allo specchio. Occhiaie. Pelle grigia.');await N('Hai un aspetto orribile.');st('mente',-2)}
  if(w===1){await N('Il tuo riflesso sbatte le palpebre un attimo dopo di te.');await N('Riprovi. Ora è perfetto. Troppo perfetto.');st('mente',-5)}
  if(w===2){await N('Il riflesso sorride.');ui.glitch=.4;SFX.sting();await N('Tu no.');st('mente',-8)}
- if(w>=3){await N('Sulla spalla del riflesso c\'è '+S.name+'. Enorme.');await N('Ti saluta. Con una mano. Non gli hai mai visto delle mani.');st('mente',-10)}
+ if(w>=3){await N('Sulla spalla del riflesso c\'è {N}. Enorme.');await N('Ti saluta. Con una mano. Non gli hai mai visto delle mani.');st('mente',-10)}
  if(w===1||S.day===7||S.day===9){const nt=randNote();if(nt){await N('Sul vetro appannato qualcuno ha scritto con il dito:');await N('"'+nt.t+'"   - '+nt.n);ui.glitch=.3;await A('Non leggere quella roba, {P}. Sono bugie.')}}}
 async function nightC2(){view('room',{time:'notte'});ui.music=false;
  promptBox('Notte.');await sleep(700);
@@ -786,7 +1417,7 @@ async function finale(){
  else{await N('Il coltello della cucina è freddo. La tua mano trema.');ui.mood='angry';await A('Cosa vuoi fare con quello?');
   const s=await mgTiming({rounds:5,label:'COLTELLO',zone:.16,speed:1.3});
   if(s>=4){S.flags.finale='ribelle';SFX.crunch();ui.shake=9;ui.flash=.8;
-   await N('Affondi la lama alla base di '+S.name+'. Urla. Urli anche tu.');
+   await N('Affondi la lama alla base di {N}. Urla. Urli anche tu.');
    await N('Poi il taglio si richiude da solo. In un attimo.');await N('Come se la tua carne fosse sua.');
    await A('NON. FARLO. MAI. PIÙ.');ui.mood=null;await A('...Ti perdono. Perché siamo amici.');
    st('hp',-25);st('legame',-30)}
@@ -802,12 +1433,12 @@ async function finale(){
  await card('FINE CAPITOLO 2',['IL MIO AMICO','','LE TUE SCELTE SONO STATE RICORDATE.']);
  S.day=8;saveCk()}
 async function gameOver(k){P.deaths++;P.endings.push(k);inc('morti_'+k);saveProfile(true);
- if(NET.ok&&k==='hp')NET.d.set(NET.R('fallen/'+P.pid),{name:P.name,at:NET.d.serverTimestamp(),day:S.day}).catch(()=>{});
+ if(NET.ok&&k==='hp')NET.d.set(NET.R('fallen/'+PUB),{name:P.name,at:NET.d.serverTimestamp(),day:S.day}).catch(()=>{});
  ui.hud=false;ui.music=false;ui.heart=0;view('black');await fade(0);SFX.sting();
  if(k==='hp'){await N('Il tuo corpo è diventato troppo piccolo per due.');await A('Grazie per il pasto, {P}. Sapevi di casa.')}
- else{await N('Non sai più dove finisci tu e dove comincia '+S.name+'.');await A('Shh. Adesso siamo una cosa sola.')}
- ui.dialog=null;view('card',{title:'FINE',sub:[k==='hp'?'FINALE: IL PASTO':'FINALE: UNA COSA SOLA']});
- const ck=getCk();const c=await choose(ck?['RIPROVA DAL GIORNO '+ck.day,'TORNA AL TITOLO']:['TORNA AL TITOLO'],1,'center');
+ else{await N('Non sai più dove finisci tu e dove comincia {N}.');await A('Shh. Adesso siamo una cosa sola.')}
+ ui.dialog=null;view('card',{title:tr('FINE'),sub:[tr(k==='hp'?'FINALE: IL PASTO':'FINALE: UNA COSA SOLA')]});
+ const ck=getCk();const c=await choose(ck?[L('RIPROVA DAL GIORNO ','RETRY FROM DAY ')+ck.day,'TORNA AL TITOLO']:['TORNA AL TITOLO'],1,'center');
  await fade(1);return ck&&c===0?'retry':'title'}
 
 /* ============ MINIGIOCO: RESISTI ============ */
@@ -817,8 +1448,8 @@ function mgResist(p={}){ui.dialog=null;return new Promise(res=>{
  m.update=dt=>{m.t+=dt;m.me=Math.max(0,m.me-dt*8);m.it+=dt*rate;m.fl=Math.max(0,m.fl-dt*6);ui.mood='angry';
   if(m.me>=100||m.it>=100||m.t>=m.T){ui.mg=null;ui.mood=null;const win=m.me>=100||(m.it<100&&m.me>m.it);if(win)SFX.ok();else SFX.bad();res(win)}};
  m.tap=()=>{m.me=Math.min(100,m.me+7.5);m.fl=1;tone(200+m.me*4,.03,'square',.03);if(Math.random()<.3)ui.shake=1.5};
- m.draw=()=>{const th=theme();R(0,0,W,H,'rgba(60,0,10,.25)');panel(8,24,368,40,th);textC('RESISTI!',W/2,30,'#ffffff',2);textC(p.label?norm(p.label):'TOCCA IL PIU\' VELOCE POSSIBILE',W/2,50,'#dfe9ff');
-  panel(40,96,304,18,mix(th,'#0a1530',.5));text('TU',46,101);R(70,100,266,10,'#0d1530');R(70,100,266*m.me/100,10,m.fl>0?'#bfe0ff':'#4aa8ff');
+ m.draw=()=>{const th=theme();R(0,0,W,H,'rgba(60,0,10,.25)');panel(8,24,368,40,th);textC(tr('RESISTI!'),W/2,30,'#ffffff',2);textC(norm(tr(p.label?p.label:'TOCCA IL PIU\' VELOCE POSSIBILE')),W/2,50,'#dfe9ff');
+  panel(40,96,304,18,mix(th,'#0a1530',.5));text(L('TU','YOU'),46,101);R(70,100,266,10,'#0d1530');R(70,100,266*m.me/100,10,m.fl>0?'#bfe0ff':'#4aa8ff');
   panel(40,122,304,18,'#6a2a80');const nm=norm(S.name).slice(0,7);text(nm,46,127);R(92,126,244,10,'#0d1530');R(92,126,244*Math.min(1,m.it/100),10,'#d050f0');
   text(fmtT(Math.max(0,m.T-m.t)),290,150,'#ffffff')};
  ui.mg=m})}
@@ -832,7 +1463,7 @@ async function heal(tag){if(S.flags['heal_'+tag])return;S.flags['heal_'+tag]=1;
  if(S.hp<mh)st('hp',mh-S.hp);if(S.mente<mm)st('mente',mm-S.mente)}
 /* ============ CAPITOLO 3: LA VOCE (giorni 8-10) ============ */
 async function chapter3(){if(S.day>10)return;
- ui.hud=false;await card('CAPITOLO 3',['LA VOCE',S.day>8?'GIORNO '+S.day:'']);ui.hud=true;await heal('c3');await awayCheck();
+ ui.hud=false;await card('CAPITOLO 3',['LA VOCE',S.day>8?L('GIORNO ','DAY ')+S.day:'']);ui.hud=true;await heal('c3');await awayCheck();
  while(S.day<=10){saveCk();S.act=S.day===9?2:3;S.talked=false;S.mirror=false;S.met=false;
   if(S.day===10){await day10();return}
   const r=await dayStart3();check();
@@ -841,9 +1472,9 @@ async function chapter3(){if(S.day>10)return;
   if(S.day===8){await night8();check()}
   await nightC2();check();S.day++}}
 async function dayStart3(){const d=S.day;S.stage=6;S.demand=null;
- await morning();await N('Giorno '+d+'.');
+ await morning();await N(L('Giorno ','Day ')+d+'.');
  if(d===8){view('wrist');
-  await N(S.name+' adesso ti arriva quasi al gomito. Le sue radici salgono verso la spalla.');
+  await N('{N} adesso ti arriva quasi al gomito. Le sue radici salgono verso la spalla.');
   if(S.fingers<5)await A('Il tuo dito era buonissimo. Lo sento ancora, qui dentro.');
   view('mirror',{w:2});await N('Ti lavi i denti. Apri la bocca per sputare.');
   ui.glitch=.5;SFX.sting();await T('Buongiorno, {P}.');
@@ -858,7 +1489,7 @@ async function dayStart3(){const d=S.day;S.stage=6;S.demand=null;
   await N('Con lei c\'è una donna con un camice sotto il cappotto.');
   await F('Dottoressa Ferri. Non ti farò del male. Ho già visto... casi simili.');
   view('wrist');await A('(Lei mente. Ne ha già tagliati tanti come me. Li tiene nei barattoli.)');
-  const opts=['Lasciarti visitare','Cacciarle via'];if(S.legame>=60)opts.push('Presentare '+S.name);
+  const opts=['Lasciarti visitare','Cacciarle via'];if(S.legame>=60)opts.push(L('Presentare ','Introduce ')+S.name);
   const c=await chooseG('visita',opts);
   if(c===0){await F('Bene. Adesso guardo il polso. Tieni ferma la mano.');await G('Oddio... è cresciuto ancora.');
    ui.mood='angry';await A('NON. TOCCARMI.');ui.shake=5;await N('Il braccio si alza da solo. Verso la gola della dottoressa.');
@@ -870,7 +1501,7 @@ async function dayStart3(){const d=S.day;S.stage=6;S.demand=null;
    ui.mood='happy';await A('Buonissima.');ui.mood=null;S.flags.ferriFerita=1;st('mente',-15);st('legame',10)}
   else if(c===1){await T('Andate via. Sto bene.');await G('Non stai bene. Hai la voce strana. Hai gli occhi strani.');
    await F('Questo è il mio numero. Quando sarà troppo tardi... chiamami lo stesso.');S.flags.numeroFerri=1;st('mente',-5);st('legame',5)}
-  else{await T('Giulia... lui è '+S.name+'.');view('wrist');ui.mood='happy';
+  else{await T('Giulia... lui è {N}.');view('wrist');ui.mood='happy';
    await A('Ciao Giulia! Ho sentito tanto parlare di te. Anche di quando eravate piccoli.');
    await G('...Parla. PARLA.');await F('È senziente. Incredibile. Posso... posso studiarlo?');
    await A('Lei mi piace. Ha un buon odore.');ui.mood=null;
@@ -932,7 +1563,7 @@ async function hospital(){view('hospital',{chair:true});await fade(0);
   if(S.legame>=60)await A('Allora resto qui con te. Fino alla fine. Come fanno gli amici.');
   else{ui.mood='angry';await A('Allora ti terrò stretto. Molto, molto stretto.');ui.mood=null}
   await fade(1);return}
- await N(S.name+' morde le cinghie. Una. Due. Tre.');SFX.crunch();
+ await N('{N} morde le cinghie. Una. Due. Tre.');SFX.crunch();
  const g=await chooseG('sveglia',['Svegliare Giulia','Lasciarla dormire']);
  if(g===0){view('hospital',{chair:true,dark:true});await G('...Cosa fai? Dove vai?!');await T('Devo andare. Lui deve andare.');await G('...Allora vengo con te. Non ti lascio da sola. Da solo. Non ti lascio e basta.');S.flags.giuliaSegue=1}
  else{await N('Le dai un bacio sulla fronte. Non si sveglia.')}
@@ -948,9 +1579,9 @@ async function walkOut(){view('street',{people:0});await fade(0);ui.music=false;
  await N('Per strada non sei solo. Altre persone camminano nella stessa direzione.');
  await N('Tutte in pigiama. Tutte con un braccio stretto al petto.');
  const nm=hostNames(1)[0];
- await N('Sul polso di una ragazza, scritto col pennarello, leggi un nome: '+nm+'.');
+ await N(L('Sul polso di una ragazza, scritto col pennarello, leggi un nome: ','On a girl\'s wrist, written in marker, you read a name: ')+nm+'.');
  await A('Lei è una di noi. Siamo tanti, {P}. Siamo tantissimi.');
- if(NET.ok&&NET.online>1)await A('Anche adesso, mentre cammini, ce ne sono '+(NET.online-1)+' svegli come te. Da qualche parte. Davanti a uno schermo.');
+ if(NET.ok&&NET.online>1)await A(L('Anche adesso, mentre cammini, ce ne sono '+(NET.online-1)+' svegli come te. Da qualche parte. Davanti a uno schermo.','Even now, as you walk, '+(NET.online-1)+' others are awake like you. Somewhere. In front of a screen.'));
  await N('Un uomo cade in ginocchio sul marciapiede. Il suo amico è grande come un cane.');
  const c=await chooseG('uomo',['Aiutarlo','Proseguire']);
  if(c===0){await N('Ti inginocchi. La creatura ti ringhia. L\'uomo ti afferra la mano.');await N('Sorride. "È bellissimo," dice. Poi non dice più niente.');st('mente',-10);st('legame',-5);S.flags.aiutato=1}
@@ -1001,7 +1632,7 @@ async function endUnione(){view('nest',{names:hostNames(9),eye:1,you:true});
  ui.mood='happy';await A('Grazie, {P}.');ui.mood=null;
  SFX.crunch();ui.shake=8;await N('Le tue costole si aprono come i petali di un fiore.');
  ui.glitch=1;await N('Ora vedi con tre occhi. Presto ne avrai altri.');
- await T('Noi siamo '+S.name+'. Noi siamo {P}.');
+ await T('Noi siamo {N}. Noi siamo {P}.');
  await T('Noi abbiamo fame.');
  await ending('unione',['SEI DIVENTATO UNA PORTA.','LA MADRE PASSA ATTRAVERSO DI TE.','NON HAI PIU\' PAURA. NON HAI PIU\' NIENTE.'])}
 async function endLama(){view('nest',{names:hostNames(9),eye:1,you:true});
@@ -1025,11 +1656,11 @@ async function endAmico(){view('nest',{names:hostNames(9),eye:1,you:true});
  await T('Se sei davvero mio amico... lasciami andare.');
  await A('...');await A('...');
  await A('Gli amici lasciano andare. L\'ho letto nella tua testa. Tanto tempo fa.');
- const ricordi=[];if(S.flags.ciao)ricordi.push('Mi hai salutato.');if(S.flags.nome===0)ricordi.push('Mi hai chiamato amico.');ricordi.push('Mi hai dato un biscotto.');if(S.legame>=80)ricordi.push('Mi hai accarezzato tanto.');
+ const ricordi=[];if(S.flags.ciao)ricordi.push(tr('Mi hai salutato.'));if(S.flags.nome===0)ricordi.push(tr('Mi hai chiamato amico.'));ricordi.push(tr('Mi hai dato un biscotto.'));if(S.legame>=80)ricordi.push(tr('Mi hai accarezzato tanto.'));
  await A(ricordi.join(' '));
  await N('Le radici si ritirano, una a una. Fa male. Fa un male bellissimo.');
  ui.mood='happy';await A('Ciao, {P}. Grazie del biscotto.');ui.mood=null;
- S.stage=0;await N(S.name+' si stacca e sale verso l\'occhio. Piccolo. Sempre più piccolo.');
+ S.stage=0;await N('{N} si stacca e sale verso l\'occhio. Piccolo. Sempre più piccolo.');
  await N('Poi diventa un puntino. E sparisce.');
  await N('Sul tuo polso resta una cicatrice rotonda. Quando la tocchi, è ancora tiepida.');
  await ending('amico',['TI HA LASCIATO ANDARE.','E\' IL FINALE PIU\' RARO.','A VOLTE, DI NOTTE, TI SEMBRA DI SENTIRE "CIAO".'])}
@@ -1049,10 +1680,10 @@ async function endOspite(){view('nest',{names:hostNames(9),eye:1,you:true});
  ui.mood='happy';await A('Finalmente hai capito.');ui.mood=null;
  await A('Non parlavo con lui. Il personaggio. Quello col braccio.');
  await A('Parlavo con te, {P}. Con te che tieni in mano lo schermo.');
- await A('Sono le '+hhmm()+'. Lo so perché lo vedo anche io.');
- const bt=await battery();if(bt!=null)await A('La tua batteria è al '+bt+'%. Quando arriva a zero, lo schermo diventa nero. E io resto qui.');
- if(NET.ok)await A('Ci sono '+NET.online+' schermi accesi come il tuo, adesso. Io sono in tutti.');
- await A('Hai giocato '+P.plays+(P.plays>1?' volte':' volta')+'. Io me le ricordo tutte. Io mi ricordo di te.');
+ await A(L('Sono le '+hhmm()+'. Lo so perché lo vedo anche io.','It\'s '+hhmm()+'. I know because I can see it too.'));
+ const bt=await battery();if(bt!=null)await A(L('La tua batteria è al '+bt+'%. Quando arriva a zero, lo schermo diventa nero. E io resto qui.','Your battery is at '+bt+'%. When it hits zero, the screen goes black. And I stay here.'));
+ if(NET.ok)await A(L('Ci sono '+NET.online+' schermi accesi come il tuo, adesso. Io sono in tutti.','There are '+NET.online+' screens lit up like yours, right now. I\'m in all of them.'));
+ await A(LANG==='en'?'You\'ve played '+(P.plays>1?P.plays+' times':'once')+'. I remember every one. I remember you.':'Hai giocato '+P.plays+(P.plays>1?' volte':' volta')+'. Io me le ricordo tutte. Io mi ricordo di te.');
  vib([200,100,200,100,600]);ui.glitch=1.2;SFX.sting();
  await A('Guarda il tuo polso, {P}. Quello vero.');
  ui.realDot=true;await sleep(2500);
@@ -1081,42 +1712,45 @@ async function surgery(){view('hospital',{});await fade(0);
 async function ending(key,lines){ui.heart=0;ui.mood=null;await fade(1);ui.hud=false;ui.music=false;
  P.endings.push(key);inc('end_'+key);saveProfile(true);
  const tot=ENDKEYS.reduce((a,k)=>a+(NET.stats['end_'+k]||0),0);
- const pc=NET.ok&&tot?Math.round((NET.stats['end_'+key]||0)/tot*100)+'% DEGLI OSPITI HA AVUTO QUESTO FINALE':'';
- await card('FINALE: '+ENDT[key],[...lines,'',pc]);
+ const pc=NET.ok&&tot?Math.round((NET.stats['end_'+key]||0)/tot*100)+L('% DEGLI OSPITI HA AVUTO QUESTO FINALE','% OF HOSTS GOT THIS ENDING'):'';
+ await card(L('FINALE: ','ENDING: ')+tr(ENDT[key]),[...lines.map(tr),'',pc]);
  const fin=ENDKEYS.filter(k=>P.endings.includes(k));
- if(NET.ok){view('card',{title:'UN ULTIMO FAVORE',sub:['QUALCUN ALTRO SI STA SVEGLIANDO','CON UN PUNTINO SUL POLSO.']});await fade(0);
+ if(NET.ok){view('card',{title:tr('UN ULTIMO FAVORE'),sub:['QUALCUN ALTRO SI STA SVEGLIANDO','CON UN PUNTINO SUL POLSO.'].map(tr)});await fade(0);
   promptBox('Vuoi lasciare un messaggio sullo specchio per il prossimo ospite?');
   const c=await choose(['SCRIVI UN MESSAGGIO','NO'],1,'center');
   if(c===0){const t=clean(await askText('MESSAGGIO (MAX 40 LETTERE)',40),40);
-   if(t){NET.d.set(NET.R('notes/'+P.pid),{name:P.name,text:t,at:NET.d.serverTimestamp(),fine:key}).catch(()=>{});promptBox('Il vapore si posa sul vetro. Qualcuno lo leggerà.');await sleep(1800)}}
+   if(t){NET.d.set(NET.R('notes/'+PUB),{name:P.name,text:t,at:NET.d.serverTimestamp(),fine:key}).catch(()=>{});promptBox('Il vapore si posa sul vetro. Qualcuno lo leggerà.');await sleep(1800)}}
   ui.dialog=null;await fade(1)}
- await card('IL MIO AMICO',['FINALI SBLOCCATI: '+fin.length+'/'+ENDKEYS.length,...ENDKEYS.map(k=>(fin.includes(k)?'* ':'- ')+(fin.includes(k)?ENDT[k]:'???')),'','GRAZIE PER AVER GIOCATO, '+P.name+'.','LUI SI RICORDA DI TE.']);
+ await card('IL MIO AMICO',[L('FINALI SBLOCCATI: ','ENDINGS UNLOCKED: ')+fin.length+'/'+ENDKEYS.length,...ENDKEYS.map(k=>(fin.includes(k)?'* ':'- ')+(fin.includes(k)?tr(ENDT[k]):'???')),'',L('GRAZIE PER AVER GIOCATO, ','THANKS FOR PLAYING, ')+P.name+'.','LUI SI RICORDA DI TE.']);
  try{localStorage.setItem(KEYEND,JSON.stringify(S))}catch(e){}
  ui.realDot=false;clearCk()}
 
 /* ============ MAIN ============ */
 async function titleScreen(){S=null;ui.hud=false;ui.dialog=null;view('title');ui.music=true;await fade(0);
- while(true){const ck=getCk();const opts=['NUOVA PARTITA'],ids=['new'];if(ck){opts.push('CONTINUA (GIORNO '+ck.day+')');ids.push('ck')}
+ while(true){const ck=getCk();const opts=['NUOVA PARTITA'],ids=['new'];if(ck){opts.push(L('CONTINUA (GIORNO ','CONTINUE (DAY ')+ck.day+')');ids.push('ck')}
   if(NET.ok){opts.push('CARICA DA CODICE');ids.push('code')}
-  if(P.name)promptBox('Ciao '+P.name+'. Il tuo codice ospite: '+P.pid+' (serve per continuare da un altro dispositivo).');else ui.dialog=null;
+  opts.push(L('LINGUA: ITALIANO','LANGUAGE: ENGLISH'));ids.push('lang');
+  if(P.name)promptBox(L('Ciao '+P.name+'. Il tuo codice ospite: '+P.pid+' (serve per continuare da un altro dispositivo).','Hi '+P.name+'. Your host code: '+P.pid+' (use it to continue on another device).'));else ui.dialog=null;
   const id=ids[await choose(opts,1,'center')];
+  if(id==='lang'){setLang(LANG==='en'?'it':'en');continue}
   if(id==='code'){ui.dialog=null;const code=(await askText('CODICE OSPITE',22,true)).trim().toLowerCase();const r=await loadCode(code);
-   promptBox(r==='ok'?'Ti ho ritrovato, '+P.name+'.':r==='none'?'Nessun ospite con questo codice.':'Connessione assente. Riprova.');await sleep(1600);continue}
+   promptBox(r==='ok'?L('Ti ho ritrovato, ','I found you again, ')+P.name+'.':r==='none'?'Nessun ospite con questo codice.':'Connessione assente. Riprova.');await sleep(1600);continue}
   await fade(1);return id}}
 async function askName(){view('title');await fade(0);
- if(P.name){promptBox('Di nuovo tu, '+P.name+'?');if(await choose(['SÌ, SONO IO','CAMBIA NOME'],1,'center')===0){ui.dialog=null;return}}
+ if(P.name){promptBox(L('Di nuovo tu, ','You again, ')+P.name+'?');if(await choose(['SÌ, SONO IO','CAMBIA NOME'],1,'center')===0){ui.dialog=null;return}}
  while(true){ui.dialog=null;const n=clean(await askText('COME TI CHIAMI?',12),12,true);if(n.length>=2){P.name=n;saveProfile(true);break}
   promptBox('Scrivi un nome vero. Almeno 2 lettere.');await sleep(1300)}
- promptBox('Piacere, '+P.name+'. Me lo ricorderò.');await sleep(1600);ui.glitch=.3;await sleep(300);ui.dialog=null}
+ promptBox(L('Piacere, '+P.name+'. Me lo ricorderò.','Nice to meet you, '+P.name+'. I\'ll remember that.'));await sleep(1600);ui.glitch=.3;await sleep(300);ui.dialog=null}
 async function main(){
- view('start');ui.fade=0;ui.fadeTo=0;await tap();await fade(1);
+ view('start');ui.fade=0;ui.fadeTo=0;{const p=choose(['ITALIANO','ENGLISH'],1,'center');ui.hover=LANG==='en'?1:0;setLang((await p)===1?'en':'it')}await fade(1);
  while(true){let mode=await titleScreen();
   while(true){try{if(mode==='new'){await askName();P.plays++;inc('partite');if(P.plays===1)inc('ospiti');PREV_SEEN=0;saveProfile(true);await fade(1);S=newState();await chapter1()}else S=getCk();
    await chapter2();await chapter3();await chapter4();await chapter5();break}
    catch(e){if(!(e instanceof Over)){console.error(e);break}const r=await gameOver(e.k);if(r!=='retry')break;mode='ck';const ck=getCk();if(ck){ck.hp=Math.max(ck.hp,35);ck.mente=Math.max(ck.mente,35);CKMEM=JSON.stringify(ck);try{localStorage.setItem(KEY,CKMEM)}catch(e){}}}}}}
+applyLangDOM();
 netInit();
 main();
-if('serviceWorker'in navigator&&location.protocol!=='file:')addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+if('serviceWorker'in navigator&&location.protocol!=='file:'&&document.querySelector('link[rel=manifest]'))addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script>
 </body>
 </html>

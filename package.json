@@ -1,0 +1,12 @@
+{
+  "name": "il-mio-amico",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Il Mio Amico - horror pixel art game",
+  "scripts": {
+    "build": "node build.js"
+  },
+  "devDependencies": {
+    "terser": "5.31.6"
+  }
+}
